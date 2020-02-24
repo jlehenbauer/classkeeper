@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Check-In</title>
+
+	<link rel="stylesheet" href="css/style.css">
+
+    <meta name="google-signin-client_id" content="894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">	
+	<script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
+	<script>
+	window.onLoadCallback = function(){
+	  gapi.auth2.init({
+	      client_id: '894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com'
+	    });
+	}
+	</script>
+
+	<script>
+    function onSignIn(googleUser) {
+      var profile = googleUser.getBasicProfile();
+      console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+      console.log('Name: ' + profile.getName());
+      console.log('Image URL: ' + profile.getImageUrl());
+      console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+      console.log("loaded googleUser");
+      document.getElementById("profile_img").src = profile.getImageUrl();
+      document.getElementById("profile_img").style.display = "";
+      document.getElementById("button-signout").style.display = "";
+      document.getElementById("button-signin").style.display = "none";
+    }
+  </script>
+  <script>
+    function signOut() {
+      var auth2 = gapi.auth2.getAuthInstance();
+      document.getElementById("profile_img").style.display = "none";
+      document.getElementById("profile_img").src = "#";
+      document.getElementById("button-signout").style.display = "none";
+      document.getElementById("button-signin").style.display = "";
+      auth2.signOut().then(function () {
+        console.log('User signed out.');
+      });
+    }
+  </script>
+
+  </head>
+  <body>
+    <div class="sign-in-header" align="center">
+      <div id="button-signin" class="g-signin2" data-onsuccess="onSignIn"></div>
+      <img class="profile-image" id="profile_img" src="#" style="display: none"/>
+      <br>
+      <button id="button-signout" href="#" onclick="signOut();" style="display: none;">Sign out</button>
+    </div>
+    <div class="testbox">
+
+      <form action="/">
+        <h1>Check-in</h1>
+        <p>Welcome to class!</p>
+        <h2>What is your first name?</h2>
+        <div class="name">
+          <input type="text" name="name" placeholder="First" />
+          <!-- <input type="text" name="name" placeholder="Last" /> -->
+        </div>
+        <div class="question">
+          <h2>How are you feeling right now?<span class="required"></span></h2>
+          <div class="question-answer">
+              <table align="center">
+                  <tr>
+                      <th class="first-col"></th>
+                      <th style="text-align: center;">1</th>
+                      <th style="text-align: center;">2</th>
+                      <th style="text-align: center;">3</th>
+                      <th style="text-align: center;">4</th>
+                      <th style="text-align: center;">5</th>
+                      <th style="text-align: center;">6</th>
+                      <th style="text-align: center;">7</th>
+                      <th style="text-align: center;">8</th>
+                      <th style="text-align: center;">9</th>
+                      <th style="text-align: center;">10</th>
+                      <th class="last-col"></th>
+                  </tr>
+                  <tr>
+                    <td class="first-col">
+                        <label><span>Bad</span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="1" id="rating_radio_1" name="rating" required/>
+                        <label for="rating_radio_2" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="2" id="rating_radio_2" name="rating" required/>
+                        <label for="rating_radio_2" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="3" id="rating_radio_3" name="rating" required/>
+                        <label for="rating_radio_3" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="4" id="rating_radio_4" name="rating" required/>
+                        <label for="rating_radio_4" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="5" id="rating_radio_5" name="rating" required/>
+                        <label for="rating_radio_5" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="6" id="rating_radio_6" name="rating" required/>
+                        <label for="rating_radio_6" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="7" id="rating_radio_7" name="rating" required/>
+                        <label for="rating_radio_7" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="8" id="rating_radio_8" name="rating" required/>
+                        <label for="rating_radio_8" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="9" id="rating_radio_9" name="rating" required/>
+                        <label for="rating_radio_9" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="10" id="rating_radio_10" name="rating" required/>
+                        <label for="rating_radio_10" class="radio"><span></span></label>
+                    </td>
+                    <td class="last-col">
+                        <label><span>Great!</span></label>
+                    </td>
+
+                  </tr>
+              </table>
+          </div>
+        </div>
+        <br>
+        <div class="question">
+            <h2>Is there anything you want Mr. Lehenbauer to know?</h2>
+            <div class="question-answer">
+                <input type="text" name="need-to-know" id="need-to-know"/>
+            </div>
+        </div>
+        <br>
+        <div class="question">
+            <h2>Do you have any questions about yesterday's work or about what we'll be doing today?</h2>
+            <div class="question-answer">
+                <input type="text" name="content-question" id="content-question"/>
+            </div>
+        </div>
+        <br>
+        <div class="btn-block">
+            <button id="submit" type="submit" href="/">Submit</button>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

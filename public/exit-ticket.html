@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Exit Ticket</title>
+
+  <link rel="stylesheet" href="css/style.css">
+
+    <meta name="google-signin-client_id" content="894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">  
+  <script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
+  <script>
+  window.onLoadCallback = function(){
+    gapi.auth2.init({
+        client_id: '894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com'
+      });
+  }
+  </script>
+
+  <script>
+    function onSignIn(googleUser) {
+      var profile = googleUser.getBasicProfile();
+      console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+      console.log('Name: ' + profile.getName());
+      console.log('Image URL: ' + profile.getImageUrl());
+      console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+      console.log("loaded googleUser");
+      document.getElementById("profile_img").src = profile.getImageUrl();
+      document.getElementById("profile_img").style.display = "";
+      document.getElementById("button-signout").style.display = "";
+      document.getElementById("button-signin").style.display = "none";
+      document.getElementById("first-name").value = profile.getName().replace(/ .*/,'');
+    }
+  </script>
+  <script>
+    function signOut() {
+      var auth2 = gapi.auth2.getAuthInstance();
+      document.getElementById("profile_img").style.display = "none";
+      document.getElementById("profile_img").src = "#";
+      document.getElementById("button-signout").style.display = "none";
+      document.getElementById("button-signin").style.display = "";
+      document.getElementById("first-name").value = "";
+      auth2.signOut().then(function () {
+        console.log('User signed out.');
+      });
+    }
+  </script>
+
+  </head>
+  <body>
+    <div class="sign-in-header" align="center">
+      <div id="button-signin" class="g-signin2" data-onsuccess="onSignIn"></div>
+      <img class="profile-image" id="profile_img" src="#" style="display: none"/>
+      <br>
+      <button id="button-signout" href="#" onclick="signOut();" style="display: none;">Sign out</button>
+    </div>
+    <div class="testbox">
+      <form id="exit-ticket-form" action="/">
+        <h1>Class Exit Ticket</h1>
+        <p>You did an AWESOME job in class today. Let me know what you did, how you felt, and how we can do better tomorrow!</p>
+        <h2>What is your first name?</h2>
+        <div class="name">
+          <input id="first-name" type="text" name="name" placeholder="First" value=""/>
+
+        </div>
+        <div class="question">
+            <h2>What did you learn about today?<span class="required">*</span></h2>
+            <div class="question-answer">
+                <input type="text" name="topic" id="topic"/>
+            </div>
+        </div>
+        <div class="question">
+            <h2>What did you use? (select all that apply)<span class="required">*</span></h2>
+            <small>Please include the following in your application.</small>
+            <div class="question-answer checkbox-item">
+              <div>
+                <input type="checkbox" value="none" id="check_1" name="checklist" required/>
+                <label for="check_1" class="check"><span>Google Classroom</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_2" name="checklist" required/>
+                <label for="check_2" class="check"><span>OneNote</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_3" name="checklist" required/>
+                <label for="check_3" class="check"><span>Paper Notebook</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_4" name="checklist" required/>
+                <label for="check_4" class="check"><span>Worksheet</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_5" name="checklist" required/>
+                <label for="check_5" class="check"><span>Written Notes</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_6" name="checklist" required/>
+                <label for="check_6" class="check"><span>Class Activity</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_7" name="checklist" required/>
+                <label for="check_7" class="check"><span>Calculator</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_8" name="checklist" required/>
+                <label for="check_8" class="check"><span>Workbook</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_9" name="checklist" required/>
+                <label for="check_9" class="check"><span>Whiteboard</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_10" name="checklist" required/>
+                <label for="check_10" class="check"><span>Class Discussion</span></label>
+              </div>
+              <div>
+                <input type="checkbox" value="none" id="check_11" name="checklist" required/>
+                <label for="check_11" class="check"><span>PantherPortal</span></label>
+              </div>
+              <div style="display:inline-block">
+                <input type="checkbox" value="none" id="check_other" name="checklist" required/>
+                <input type="text" name="check_other" />
+              </div>
+            </div>
+        </div>
+        <div class="question">
+            <h2>Where did you learn it?<span class="required">*</span></h2>
+            <div class="question-answer">
+                <select id="location">
+                <option class="disabled" value="location" disabled selected></option>Please Select</option>
+                <option value="inside">Inside</option>
+                <option value="outside">Outside</option>
+                <option value="other">Other</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="question">
+          <h2>How well did you learn the topic today?<span class="required">*</span></h2>
+          <div class="question-answer">
+              <table class="ratings" align="center" width="100%">
+                  <tr>
+                      <th class="first-col"></th>
+                      <th style="text-align: center;">1</th>
+                      <th style="text-align: center;">2</th>
+                      <th style="text-align: center;">3</th>
+                      <th style="text-align: center;">4</th>
+                      <th style="text-align: center;">5</th>
+                      <th style="text-align: center;">6</th>
+                      <th style="text-align: center;">7</th>
+                      <th style="text-align: center;">8</th>
+                      <th style="text-align: center;">9</th>
+                      <th style="text-align: center;">10</th>
+                      <th class="last-col"></th>
+                  </tr>
+                  <tr>
+                    <td class="first-col">
+                        <label align="center">I still need help</label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="1" id="rating_radio_1" name="rating" required/>
+                        <label for="rating_radio_1" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="2" id="rating_radio_2" name="rating" required/>
+                        <label for="rating_radio_2" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="3" id="rating_radio_3" name="rating" required/>
+                        <label for="rating_radio_3" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="4" id="rating_radio_4" name="rating" required/>
+                        <label for="rating_radio_4" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="5" id="rating_radio_5" name="rating" required/>
+                        <label for="rating_radio_5" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="6" id="rating_radio_6" name="rating" required/>
+                        <label for="rating_radio_6" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="7" id="rating_radio_7" name="rating" required/>
+                        <label for="rating_radio_7" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="8" id="rating_radio_8" name="rating" required/>
+                        <label for="rating_radio_8" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="9" id="rating_radio_9" name="rating" required/>
+                        <label for="rating_radio_9" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: right;">
+                        <input type="radio" value="10" id="rating_radio_10" name="rating" required/>
+                        <label for="rating_radio_10" class="radio"><span></span></label>
+                    </td>
+                    <td class="last-col">
+                        <label>I could teach someone else</label>
+                    </td>
+
+                  </tr>
+              </table>
+          </div>
+        </div>
+        <br>
+        <div class="question">
+            <h2>If you still have a question about what we did, type it below.</h2>
+            <div class="question-answer">
+                <textarea rows="3" id="student-question" value=""></textarea>
+            </div>
+        </div>
+        <br>
+        <br>
+        <div class="btn-block">
+            <button id="submit" type="submit" href="/">Submit</button>
+        </div>
+      </form>
+    </div>
+  </body>
+
+
+
+<!-- Import and configure the Firebase SDK -->
+<!-- These scripts are made available when the app is served or deployed on Firebase Hosting -->
+<!-- If you do not want to serve/host your project using Firebase Hosting see https://firebase.google.com/docs/web/setup -->
+<script src="/__/firebase/7.6.2/firebase-app.js"></script>
+<script src="/__/firebase/7.6.2/firebase-auth.js"></script>
+<script src="/__/firebase/7.6.2/firebase-storage.js"></script>
+<script src="/__/firebase/7.6.2/firebase-messaging.js"></script>
+<script src="/__/firebase/7.6.2/firebase-firestore.js"></script>
+<script src="/__/firebase/7.6.2/firebase-performance.js"></script>
+<script src="/__/firebase/init.js"></script>
+
+<script src="scripts/main.js"></script>
+</html>
