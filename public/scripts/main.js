@@ -57,7 +57,8 @@ function isUserSignedIn() {
 // Saves a new message on the Firebase DB.
 function saveMessage(entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
   // Add a new message entry into the database.
-  return firebase.firestore().collection('messages').add({
+  console.log('Attempting to add to messages database')
+  return firebase.firestore().collection('exit-tickets').add({
     name: getUserName(),
     email: getEmail(),
     topic: entryTopic,
@@ -128,6 +129,7 @@ function onMediaFileSelected(event) {
 // Class Keeper: Triggered when the send new message form is submitted.
 function onExitTicketFormSubmit(e) {
   //e.preventDefault();
+  console.log("Exit ticket being sent.")
   // ^ Check that the user entered a message and is signed in.
   if (exitTopic.value && exitMethods.value && exitLocation.value && exitRating.value && checkSignedInWithMessage()) {
     saveMessage(exitTopic.value, exitMethods.value, exitLocation.value, exitRating.value, exitQuestion.value).then(function() {
