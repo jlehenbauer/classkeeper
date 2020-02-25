@@ -1,7 +1,7 @@
 {
-  "name": "Friendly Chat",
-  "short_name": "Friendly Chat",
-  "start_url": "/index.html",
+  "name": "Class Keeper",
+  "short_name": "Class Keeper",
+  "start_url": "/exit-ticket.html",
   "display": "standalone",
   "orientation": "portrait"
 }
