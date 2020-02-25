@@ -130,6 +130,11 @@ function onMediaFileSelected(event) {
 function onExitTicketFormSubmit(e) {
   //e.preventDefault();
   console.log("Exit ticket being sent.")
+  console.log(exitTopic.value)
+  console.log(exitMethods.value)
+  console.log(exitLocation.value)
+  console.log(exitRating.value)
+  console.logt(exitQuestion.value)
   // ^ Check that the user entered a message and is signed in.
   if (exitTopic.value && exitMethods.value && exitLocation.value && exitRating.value && checkSignedInWithMessage()) {
     saveMessage(exitTopic.value, exitMethods.value, exitLocation.value, exitRating.value, exitQuestion.value).then(function() {
