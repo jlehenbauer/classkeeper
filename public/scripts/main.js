@@ -128,17 +128,18 @@ function onMediaFileSelected(event) {
 }
 
 // Class Keeper: Triggered when the send new message form is submitted.
-function onExitTicketFormSubmit(e) {
+function onExitTicketFormSubmit() {
   //e.preventDefault();
   console.log("Exit ticket being sent.")
   console.log(exitTopic.value)
-  console.log(exitMethods.value)
+  console.log(getCheckedMethods())
   console.log(exitLocation.value)
-  console.log(exitRating.value)
+  console.log(exitTicketFormElement.elements["rating"].value)
   console.log(exitQuestion.value)
+  console.log(true == (exitTopic.value && getCheckedMethods() && exitLocation.value && exitTicketFormElement.elements["rating"].value && checkSignedInWithMessage()))
   // ^ Check that the user entered a message and is signed in.
-  if (exitTopic.value && exitMethods.value && exitLocation.value && exitRating.value && checkSignedInWithMessage()) {
-    saveMessage(exitTopic.value, exitMethods.value, exitLocation.value, exitRating.value, exitQuestion.value).then(function() {
+  if (exitTopic.value && getCheckedMethods() && exitLocation.value && exitTicketFormElement.elements["rating"].value && checkSignedInWithMessage()) {
+    saveMessage(exitTopic.value, getCheckedMethods(), exitLocation.value, exitTicketFormElement.elements["rating"].value, exitQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
@@ -184,12 +185,12 @@ function authStateObserver(user) {
     saveMessagingDeviceToken();
   } else { // User is signed out!
     // Hide user's profile and sign-out button.
-    //userNameElement.setAttribute('hidden', 'true');
-    //userPicElement.setAttribute('hidden', 'true');
-    //signOutButtonElement.setAttribute('hidden', 'true');
+    userNameElement.setAttribute('hidden', 'true');
+    userPicElement.setAttribute('hidden', 'true');
+    signOutButtonElement.setAttribute('hidden', 'true');
 
     // Show sign-in button.
-    //signInButtonElement.removeAttribute('hidden');
+    signInButtonElement.removeAttribute('hidden');
   }
 }
 
@@ -205,7 +206,7 @@ function checkSignedInWithMessage() {
     message: 'You must sign-in first',
     timeout: 2000
   };
-  signInSnackbarElement.MaterialSnackbar.showSnackbar(data);
+  //signInSnackbarElement.MaterialSnackbar.showSnackbar(data);
   return false;
 }
 
@@ -333,6 +334,18 @@ function checkSetup() {
   }
 }
 
+// Gets selected options from the checkboxes and returns them as a list
+function getCheckedMethods() {
+  var methods = [];
+  for (let item in exitMethods) {
+    //console.log(item)
+    if (exitMethods[item].checked) {
+      methods.push(exitMethods[item].value);
+    }
+  }
+  return methods;
+}
+
 // Checks that Firebase has been imported.
 checkSetup();
 
@@ -359,7 +372,7 @@ var userFirstName = document.getElementById('first-name');
 // Form Elements
 var exitTicketFormElement = document.getElementById('exit-ticket-form');
 var exitTopic = document.getElementById('topic');
-var exitMethods = document.getElementByName('checklist');
+var exitMethods = document.getElementsByName('checklist');
 var exitLocation = document.getElementById('location');
 var exitRating = document.getElementById('rating_radio');
 var exitQuestion = document.getElementById('student-question');
@@ -370,7 +383,7 @@ exitTicketFormElement.addEventListener('submita', onExitTicketFormSubmit);
 
 // Saves message on form submit.
 //messageFormElement.addEventListener('submita', onMessageFormSubmit);
-//signOutButtonElement.addEventListener('click', signOut);
+signOutButtonElement.addEventListener('click', signOut);
 //signInButtonElement.addEventListener('click', signIn);
 
 // Toggle for the button.
@@ -388,6 +401,7 @@ mediaCaptureElement.addEventListener('change', onMediaFileSelected);
 
 // initialize Firebase
 initFirebaseAuth();
+console.log("Just initFirebaseAuth'd")
 
 // TODO: Enable Firebase Performance Monitoring.
 
