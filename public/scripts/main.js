@@ -377,13 +377,14 @@ var exitLocation = document.getElementById('location');
 var exitRating = document.getElementById('rating_radio');
 var exitQuestion = document.getElementById('student-question');
 var submitButtonElement = document.getElementById('submita');
+var signOutButton = document.getElementById('button_signout');
 
 // Saves exit ticket on submission
 exitTicketFormElement.addEventListener('submita', onExitTicketFormSubmit);
 
 // Saves message on form submit.
 //messageFormElement.addEventListener('submita', onMessageFormSubmit);
-signOutButtonElement.addEventListener('click', signOut);
+signOutButton.addEventListener('click', signOut);
 //signInButtonElement.addEventListener('click', signIn);
 
 // Toggle for the button.
