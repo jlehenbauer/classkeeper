@@ -70,6 +70,7 @@ function saveMessage(entryTopic, entryMethod, entryLocation, entryRating, entryQ
   }).catch(function(error) {
     console.error('Error writing new message to database.', error);
   });
+  return false;
 }
 
 // Loads chat messages history and listens for upcoming ones.
@@ -134,7 +135,7 @@ function onExitTicketFormSubmit(e) {
   console.log(exitMethods.value)
   console.log(exitLocation.value)
   console.log(exitRating.value)
-  console.logt(exitQuestion.value)
+  console.log(exitQuestion.value)
   // ^ Check that the user entered a message and is signed in.
   if (exitTopic.value && exitMethods.value && exitLocation.value && exitRating.value && checkSignedInWithMessage()) {
     saveMessage(exitTopic.value, exitMethods.value, exitLocation.value, exitRating.value, exitQuestion.value).then(function() {
@@ -144,6 +145,7 @@ function onExitTicketFormSubmit(e) {
       clearExitTicket();
     });
   }
+  return false;
 }
 
 // Triggered when the send new message form is submitted.
@@ -357,14 +359,14 @@ var userFirstName = document.getElementById('first-name');
 // Form Elements
 var exitTicketFormElement = document.getElementById('exit-ticket-form');
 var exitTopic = document.getElementById('topic');
-var exitMethods = document.getElementsByName('checklist');
+var exitMethods = document.getElementByName('checklist');
 var exitLocation = document.getElementById('location');
-var exitRating = document.getElementById('rating');
+var exitRating = document.getElementById('rating_radio');
 var exitQuestion = document.getElementById('student-question');
-var submitButtonElement = document.getElementById('submit');
+var submitButtonElement = document.getElementById('submita');
 
 // Saves exit ticket on submission
-exitTicketFormElement.addEventListener('submit', onExitTicketFormSubmit);
+exitTicketFormElement.addEventListener('submita', onExitTicketFormSubmit);
 
 // Saves message on form submit.
 //messageFormElement.addEventListener('submita', onMessageFormSubmit);
