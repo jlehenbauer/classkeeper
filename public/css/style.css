@@ -21,10 +21,11 @@ html, body {
       }
       .testbox {
       display: flex;
-      justify-content: center;
-      align-items: center;
       height: inherit;
+      margin: auto;
       padding: 20px;
+      min-width: auto;
+      max-width: 750px;
       }
       form {
       width: 100%;
