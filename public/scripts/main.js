@@ -16,7 +16,7 @@
 'use strict';
 
 // Signs-in Class Keeper
-function signIn() {
+function signIn(googleUser) {
   // Sign in Firebase using popup auth and Google as the identity provider.
   var provider = new firebase.auth.GoogleAuthProvider();
   firebase.auth().signInWithPopup(provider);
@@ -164,29 +164,41 @@ function onMessageFormSubmit(e) {
 
 // Triggers when the auth state change for instance when the user signs-in or signs-out.
 function authStateObserver(user) {
-  if (user) { // User is signed in!
+  if (user != null) { // User is signed in!
     // Get the signed-in user's profile pic and name.
     var profilePicUrl = getProfilePicUrl();
     var userName = getUserName();
+    var userEmail = getEmail();
+
+    console.log("User is logged in");
 
     // Set the user's profile pic and name.
+
+    //console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+    console.log('Name: ' + userName);
+    console.log('Image URL: ' + profilePicUrl);
+    console.log('Email: ' + userEmail); // This is null if the 'email' scope is not present.
+    console.log("loaded googleUser");
+    document.getElementById("profile_img").src = profilePicUrl;
+    document.getElementById("first-name").value = userName.replace(/ .*/,'');
     //userPicElement.style.backgroundImage = 'url(' + addSizeToGoogleProfilePic(profilePicUrl) + ')';
     //userNameElement.textContent = userName;
 
     // Show user's profile and sign-out button.
     //userNameElement.removeAttribute('hidden');
-    //userPicElement.removeAttribute('hidden');
-    //signOutButtonElement.removeAttribute('hidden');
+    profileImage.removeAttribute('hidden');
+    signOutButtonElement.removeAttribute('hidden');
 
     // Hide sign-in button.
-    //signInButtonElement.setAttribute('hidden', 'true');
+    signInButtonElement.setAttribute('hidden', 'true');
 
     // We save the Firebase Messaging Device token and enable notifications.
     saveMessagingDeviceToken();
   } else { // User is signed out!
+    console.log("User is not signed in");
     // Hide user's profile and sign-out button.
-    userNameElement.setAttribute('hidden', 'true');
-    userPicElement.setAttribute('hidden', 'true');
+    //userNameElement.setAttribute('hidden', 'true');
+    profileImage.setAttribute('hidden', 'true');
     signOutButtonElement.setAttribute('hidden', 'true');
 
     // Show sign-in button.
@@ -377,15 +389,14 @@ var exitLocation = document.getElementById('location');
 var exitRating = document.getElementById('rating_radio');
 var exitQuestion = document.getElementById('student-question');
 var submitButtonElement = document.getElementById('submita');
-var signOutButton = document.getElementById('button_signout');
 
 // Saves exit ticket on submission
 exitTicketFormElement.addEventListener('submita', onExitTicketFormSubmit);
 
 // Saves message on form submit.
 //messageFormElement.addEventListener('submita', onMessageFormSubmit);
-signOutButton.addEventListener('click', signOut);
-//signInButtonElement.addEventListener('click', signIn);
+signOutButtonElement.addEventListener('click', signOut);
+signInButtonElement.addEventListener('click', signIn);
 
 // Toggle for the button.
 //messageInputElement.addEventListener('keyup', toggleButton);
@@ -402,8 +413,6 @@ mediaCaptureElement.addEventListener('change', onMediaFileSelected);
 
 // initialize Firebase
 initFirebaseAuth();
-console.log("Just initFirebaseAuth'd")
-
 // TODO: Enable Firebase Performance Monitoring.
 
 // We load currently existing chat messages and listen to new ones.
