@@ -200,6 +200,11 @@ html, body {
       button:hover {
       background: #0666a3;
       }
+      .profile-image{
+            width: 10em;
+            border-radius: 50%;
+            padding: 15px;
+      }
       @media (min-width: 568px) {
       .city-item {
       display: flex;
@@ -211,10 +216,6 @@ html, body {
       }
       .city-item select {
       width: calc(50% - 8px);
-      }
-      .profile-image{
-            border-radius: 50%;
-            padding: 15px;
       }
       .sign-in-header {
             align-content: center;
