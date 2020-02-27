@@ -17,35 +17,6 @@
   }
   </script>
 
-  <script>
-    function onSignIn(googleUser) {
-      // From old onSignIn method
-      /**
-      var profile = googleUser.getBasicProfile();
-      console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-      console.log('Name: ' + profile.getName());
-      console.log('Image URL: ' + profile.getImageUrl());
-      console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-      console.log("loaded googleUser");
-      document.getElementById("profile_img").src = profile.getImageUrl();
-      document.getElementById("first-name").value = profile.getName().replace(/ .*/,'');
-      signIn();
-      **/
-    }
-  </script>
-  <script>
-    function signOut() {
-      /**
-      console.log('Trying to sign out.');
-      var auth2 = gapi.auth2.getAuthInstance();
-      document.getElementById("first-name").value = "";
-      auth2.signOut().then(function () {
-        console.log('User signed out.');
-      });
-      **/
-    }
-  </script>
-
   </head>
   <body>
     <div class="sign-in-header" align="center">

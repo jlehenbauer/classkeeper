@@ -73,6 +73,23 @@ function saveMessage(entryTopic, entryMethod, entryLocation, entryRating, entryQ
   return false;
 }
 
+// Saves a new check-in on the Firebase DB.
+function saveCheckIn(feeling, pleaseKnow, contentQuestion) {
+  // Add a new message entry into the database.
+  console.log('Attempting to add to check-in database')
+  return firebase.firestore().collection('check-ins').add({
+    name: getUserName(),
+    email: getEmail(),
+    feeling: feeling,
+    pleaseKnow: pleaseKnow,
+    question: contentQuestion,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function(error) {
+    console.error('Error writing new check-in to database.', error);
+  });
+  return false;
+}
+
 // Loads chat messages history and listens for upcoming ones.
 function loadMessages() {
   // TODO 8: Load and listens for new messages.
@@ -87,21 +104,42 @@ function saveImageMessage(file) {
 // Saves the messaging device token to the datastore.
 function saveMessagingDeviceToken() {
   // TODO 10: Save the device token in the realtime datastore
+  firebase.messaging().getToken().then(function(currentToken) {
+    if (currentToken) {
+      console.log('Got FCM device token:', currentToken);
+      // Saving the Device Token to the datastore
+      firebase.firestore().collection('fcmTokens').doc(currentToken).set({uid: firebase.auth().currentUser.uid});
+    } else {
+      // Need to request permissions to show notifications.
+      requestNotificationsPermissions();
+    }
+  }).catch(function(error){
+    console.error('Unable to get messaging token.', error);
+  });
 }
 
 // Requests permissions to show notifications.
 function requestNotificationsPermissions() {
   // TODO 11: Request permissions to send notifications.
+  console.log('Requesting notifications permission...');
+  firebase.messaging().requestPermission().then(function() {
+    // Notification permission granted.
+    saveMessagingDeviceToken();
+  }).catch(function(error) {
+    console.error('Unable to get permission to notify.', error);
+  });
 }
 
-// Custom Class Keeper Functions
+// Clear exit ticket
 function clearExitTicket(){
   resetMaterialTextfield(exitTopic);
   resetMaterialTextfield(exitQuestion);
-  // TODO:
-  // clear checkboxes
-  // clear location
-  // clear rating
+}
+
+// Custom check-in
+function clearExitTicket(){
+  resetMaterialTextfield(pleaseKnow);
+  resetMaterialTextfield(contentQuestion);
 }
 
 // Triggered when a file is selected via the media picker.
@@ -130,7 +168,7 @@ function onMediaFileSelected(event) {
 // Class Keeper: Triggered when the send new message form is submitted.
 function onExitTicketFormSubmit() {
   //e.preventDefault();
-  console.log("Exit ticket being sent.")
+  console.log("Check-in being sent.")
   console.log(exitTopic.value)
   console.log(getCheckedMethods())
   console.log(exitLocation.value)
@@ -144,6 +182,27 @@ function onExitTicketFormSubmit() {
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
       clearExitTicket();
+
+    });
+  }
+  return false;
+}
+
+// Class Keeper: Triggered when the send check-in is submitted.
+function onCheckInSubmit() {
+  //e.preventDefault();
+  console.log("Exit ticket being sent.")
+  console.log(checkInFormElement.elements["rating"].value)
+  console.log(pleaseKnow.value)
+  console.log(contentQuestion.value)
+  console.log(true == (checkInFormElement.elements["rating"].value && pleaseKnow.value && contentQuestion.value && checkSignedInWithMessage()))
+  // ^ Check that the user entered a message and is signed in.
+  if (checkInFormElement.elements["rating"].value && pleaseKnow.value && contentQuestion.value && checkSignedInWithMessage()) {
+    saveCheckIn(checkInFormElement.elements["rating"].value, pleaseKnow.value, contentQuestion.value).then(function() {
+      // Clear message text field and re-enable the SEND button.
+      //resetMaterialTextfield(messageInputElement);
+      //toggleButton();
+      clearCheckInForm();
     });
   }
   return false;
@@ -383,6 +442,7 @@ var userFirstName = document.getElementById('first-name');
 
 // Form Elements
 var exitTicketFormElement = document.getElementById('exit-ticket-form');
+var checkInFormElement = document.getElementById('check-in');
 var exitTopic = document.getElementById('topic');
 var exitMethods = document.getElementsByName('checklist');
 var exitLocation = document.getElementById('location');
@@ -390,8 +450,21 @@ var exitRating = document.getElementById('rating_radio');
 var exitQuestion = document.getElementById('student-question');
 var submitButtonElement = document.getElementById('submita');
 
+// Check-in Form Elements
+var submitCheckInButton = document.getElementById('submit');
+var feeling = document.getElementById('feeling');
+var pleaseKnow = document.getElementById('need-to-know');
+var contentQuestion = document.getElementById('content-question');
+
+
+
 // Saves exit ticket on submission
-exitTicketFormElement.addEventListener('submita', onExitTicketFormSubmit);
+if (exitTicketFormElement) {
+  exitTicketFormElement.addEventListener('submita', onExitTicketFormSubmit);
+}
+if (checkInFormElement) {
+  checkInFormElement.addEventListener('submit', onCheckInSubmit);
+}
 
 // Saves message on form submit.
 //messageFormElement.addEventListener('submita', onMessageFormSubmit);
