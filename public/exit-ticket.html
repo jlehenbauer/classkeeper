@@ -19,6 +19,8 @@
 
   <script>
     function onSignIn(googleUser) {
+      // From old onSignIn method
+      /**
       var profile = googleUser.getBasicProfile();
       console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
       console.log('Name: ' + profile.getName());
@@ -26,34 +28,31 @@
       console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
       console.log("loaded googleUser");
       document.getElementById("profile_img").src = profile.getImageUrl();
-      document.getElementById("profile_img").style.display = "";
-      document.getElementById("button-signout").style.display = "";
-      document.getElementById("button-signin").style.display = "none";
       document.getElementById("first-name").value = profile.getName().replace(/ .*/,'');
+      signIn();
+      **/
     }
   </script>
   <script>
     function signOut() {
+      /**
       console.log('Trying to sign out.');
       var auth2 = gapi.auth2.getAuthInstance();
-      document.getElementById("profile_img").style.display = "none";
-      document.getElementById("profile_img").src = "#";
-      document.getElementById("button-signout").style.display = "none";
-      document.getElementById("button-signin").style.display = "";
       document.getElementById("first-name").value = "";
       auth2.signOut().then(function () {
         console.log('User signed out.');
       });
+      **/
     }
   </script>
 
   </head>
   <body>
     <div class="sign-in-header" align="center">
-      <div id="button-signin" class="g-signin2" data-onsuccess="onSignIn"></div>
-      <img class="profile-image" id="profile_img" src="#" style="display: none"/>
+      <div id="sign-in" class="g-signin2" hidden></div>
+      <img class="profile-image" id="profile_img" src="#" hidden/>
       <br>
-      <button id="button-signout" href="#" onclick="signOut()" style="display: none;">Sign out</button>
+      <button id="sign-out" href="#" onclick="signOut()" hidden>Sign out</button>
     </div>
     <div class="testbox">
       <form id="exit-ticket-form" action="#" onsubmit="onExitTicketFormSubmit()">
@@ -216,9 +215,6 @@
         <br>
         <div class="btn-block">
             <button id="submita" type="submit">Submit</button>
-        </div>
-        <div>
-          <button id="otherbutton">Other</button>
         </div>
       </form>
     </div>
