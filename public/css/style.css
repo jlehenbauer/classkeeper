@@ -206,6 +206,9 @@ html, body {
             border-radius: 50%;
             padding: 15px;
       }
+      #sign-in {
+            margin: 20px;
+      }
       @media (min-width: 568px) {
       .city-item {
       display: flex;
@@ -220,12 +223,5 @@ html, body {
       }
       .sign-in-header {
             align-content: center;
-      }
-      #button-signin {
-            padding: 15px;
-            padding-bottom: 0px
-      }
-      #button-signout {
-            padding: 15px;
       }
 }

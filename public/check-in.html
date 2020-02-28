@@ -9,45 +9,11 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">	
 	<script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
-	<script>
-	window.onLoadCallback = function(){
-	  gapi.auth2.init({
-	      client_id: '894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com'
-	    });
-	}
-	</script>
-
-	<script>
-    function onSignIn(googleUser) {
-      var profile = googleUser.getBasicProfile();
-      console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-      console.log('Name: ' + profile.getName());
-      console.log('Image URL: ' + profile.getImageUrl());
-      console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-      console.log("loaded googleUser");
-      document.getElementById("profile_img").src = profile.getImageUrl();
-      document.getElementById("profile_img").style.display = "";
-      document.getElementById("button-signout").style.display = "";
-      document.getElementById("button-signin").style.display = "none";
-    }
-  </script>
-  <script>
-    function signOut() {
-      var auth2 = gapi.auth2.getAuthInstance();
-      document.getElementById("profile_img").style.display = "none";
-      document.getElementById("profile_img").src = "#";
-      document.getElementById("button-signout").style.display = "none";
-      document.getElementById("button-signin").style.display = "";
-      auth2.signOut().then(function () {
-        console.log('User signed out.');
-      });
-    }
-  </script>
 
   </head>
   <body>
     <div class="sign-in-header" align="center">
-      <div id="sign-in" class="g-signin2" hidden></div>
+      <button id="sign-in" hidden>Sign in</button>
       <img class="profile-image" id="profile_img" src="#" hidden/>
       <br>
       <button id="sign-out" href="#" hidden>Sign out</button>
