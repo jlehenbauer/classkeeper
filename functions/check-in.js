@@ -1,6 +1,5 @@
-// Import the Firebase SDK for Google Cloud Functions.
 const functions = require('firebase-functions');
-// Import and initialize the Firebase Admin SDK.
+
 const admin = require('firebase-admin');
 admin.initializeApp();
 
@@ -17,27 +16,27 @@ exports.addWelcomeMessages = functions.auth.user().onCreate(async (user) => {
 // Sends a notifications to all users when a new message is posted.
 exports.sendNotifications = functions.firestore.document('check-ins/{messageId}').onCreate(
   async (snapshot) => {
-    // DEBUG: console.log('Feeling rating to notify ' + snapshot.data().feeling);
     // Notification details.
     const question = snapshot.data().question;
-    const know = snapshot.data().pleaseKnow;
+    const know = sanpshot.data().pleaseKnow;
     const payload = {
       notification: {
         title: `${snapshot.data().name} checked in at a ${snapshot.data().feeling}`,
         body: know ? ('You should know: ' + know) : '' + question ? ('Asked: ' + question) : '',
+        //body: text ? (text.length <= 100 ? text : text.substring(0, 97) + '...') : '',
         icon: snapshot.data().profilePicUrl || '/images/profile_placeholder.png',
         click_action: `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com`,
       }
     };
+    console.log(payload);
 
     // Get the list of device tokens.
     const allTokens = await admin.firestore().collection('fcmTokens').get();
     const tokens = [];
     allTokens.forEach((tokenDoc) => {
-      // DEBUG: console.log(tokenDoc.data().role);
-      if (tokenDoc.data().role == 'teacher') {
-        tokens.push(tokenDoc.id);
-      }
+      //if (tokenDoc.role == "teacher") {
+      tokens.push(tokenDoc.id);
+      //}
     });
 
     if (tokens.length > 0) {
@@ -59,7 +58,7 @@ function cleanupTokens(response, tokens) {
      // Cleanup the tokens who are not registered anymore.
      if (error.code === 'messaging/invalid-registration-token' ||
          error.code === 'messaging/registration-token-not-registered') {
-       const deleteTask = admin.firestore().collection('fcmTokens').doc(tokens[index]).delete();
+       const deleteTask = admin.firestore().collection('check-ins').doc(tokens[index]).delete();
        tokensDelete.push(deleteTask);
      }
    }

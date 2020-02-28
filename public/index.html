@@ -1,65 +1,177 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+    <title>Check-In</title>
 
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/7.9.1/firebase-app.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/7.9.1/firebase-auth.js"></script>
-    <script defer src="/__/firebase/7.9.1/firebase-database.js"></script>
-    <script defer src="/__/firebase/7.9.1/firebase-messaging.js"></script>
-    <script defer src="/__/firebase/7.9.1/firebase-storage.js"></script>
-    <!-- initialize the SDK after all desired features are loaded -->
-    <script defer src="/__/firebase/init.js"></script>
+  <link rel="stylesheet" href="css/style.css">
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
+    <meta name="google-signin-client_id" content="894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">  
+  <script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
+  <script>
+  window.onLoadCallback = function(){
+    gapi.auth2.init({
+        client_id: '894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com'
+      });
+  }
+  </script>
+
+  <script>
+    function onSignIn(googleUser) {
+      var profile = googleUser.getBasicProfile();
+      console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+      console.log('Name: ' + profile.getName());
+      console.log('Image URL: ' + profile.getImageUrl());
+      console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+      console.log("loaded googleUser");
+      document.getElementById("profile_img").src = profile.getImageUrl();
+      document.getElementById("profile_img").style.display = "";
+      document.getElementById("button-signout").style.display = "";
+      document.getElementById("button-signin").style.display = "none";
+    }
+  </script>
+  <script>
+    function signOut() {
+      var auth2 = gapi.auth2.getAuthInstance();
+      document.getElementById("profile_img").style.display = "none";
+      document.getElementById("profile_img").src = "#";
+      document.getElementById("button-signout").style.display = "none";
+      document.getElementById("button-signin").style.display = "";
+      auth2.signOut().then(function () {
+        console.log('User signed out.');
+      });
+    }
+  </script>
+
   </head>
   <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
+    <div class="sign-in-header" align="center">
+      <div id="sign-in" class="g-signin2" hidden></div>
+      <img class="profile-image" id="profile_img" src="#" hidden/>
+      <br>
+      <button id="sign-out" href="#" hidden>Sign out</button>
     </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
+    <div class="testbox">
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+      <form action="#" id="check-in">
+        <h1>Check-in</h1>
+        <p>Welcome to class!</p>
+        <h2>What is your first name?</h2>
+        <div class="name">
+          <input id="first-name" type="text" name="name" placeholder="First" />
+          <!-- <input type="text" name="name" placeholder="Last" /> -->
+        </div>
+        <div class="question">
+          <h2>How are you feeling right now?<span class="required"></span></h2>
+          <div class="question-answer" id="feeling">
+              <table align="center">
+                  <tr>
+                      <th class="first-col"></th>
+                      <th style="text-align: center;">1</th>
+                      <th style="text-align: center;">2</th>
+                      <th style="text-align: center;">3</th>
+                      <th style="text-align: center;">4</th>
+                      <th style="text-align: center;">5</th>
+                      <th style="text-align: center;">6</th>
+                      <th style="text-align: center;">7</th>
+                      <th style="text-align: center;">8</th>
+                      <th style="text-align: center;">9</th>
+                      <th style="text-align: center;">10</th>
+                      <th class="last-col"></th>
+                  </tr>
+                  <tr>
+                    <td class="first-col">
+                        <label><span>Bad</span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="1" id="rating_radio_1" name="rating" required/>
+                        <label for="rating_radio_1" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="2" id="rating_radio_2" name="rating" required/>
+                        <label for="rating_radio_2" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="3" id="rating_radio_3" name="rating" required/>
+                        <label for="rating_radio_3" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="4" id="rating_radio_4" name="rating" required/>
+                        <label for="rating_radio_4" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="5" id="rating_radio_5" name="rating" required/>
+                        <label for="rating_radio_5" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="6" id="rating_radio_6" name="rating" required/>
+                        <label for="rating_radio_6" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="7" id="rating_radio_7" name="rating" required/>
+                        <label for="rating_radio_7" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="8" id="rating_radio_8" name="rating" required/>
+                        <label for="rating_radio_8" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="9" id="rating_radio_9" name="rating" required/>
+                        <label for="rating_radio_9" class="radio"><span></span></label>
+                    </td>
+                    <td style="text-align: center;">
+                        <input type="radio" value="10" id="rating_radio_10" name="rating" required/>
+                        <label for="rating_radio_10" class="radio"><span></span></label>
+                    </td>
+                    <td class="last-col">
+                        <label><span>Great!</span></label>
+                    </td>
 
-        try {
-          let app = firebase.app();
-          let features = ['auth', 'database', 'messaging', 'storage'].filter(feature => typeof app[feature] === 'function');
-          document.getElementById('load').innerHTML = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          document.getElementById('load').innerHTML = 'Error loading the Firebase SDK, check the console.';
-        }
-      });
-    </script>
+                  </tr>
+              </table>
+          </div>
+        </div>
+        <br>
+        <div class="question">
+            <h2>Is there anything you want Mr. Lehenbauer to know?</h2>
+            <div class="question-answer">
+                <input type="text" name="need-to-know" id="need-to-know"/>
+            </div>
+        </div>
+        <br>
+        <div class="question">
+            <h2>Do you have any questions about yesterday's work or about what we'll be doing today?</h2>
+            <div class="question-answer">
+                <input type="text" name="content-question" id="content-question"/>
+            </div>
+        </div>
+        <br>
+        <div class="btn-block">
+            <button id="submit" type="submit">Submit</button>
+        </div>
+      </form>
+    </div>
   </body>
+
+<!-- Import and configure the Firebase SDK -->
+<!-- These scripts are made available when the app is served or deployed on Firebase Hosting -->
+<!-- If you do not want to serve/host your project using Firebase Hosting see https://firebase.google.com/docs/web/setup -->
+
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="/__/firebase/7.9.1/firebase-app.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+
+<!-- Initialize Firebase -->
+<script src="/__/firebase/init.js"></script>
+<script src="/__/firebase/7.9.1/firebase-auth.js"></script>
+<script src="/__/firebase/7.9.1/firebase-storage.js"></script>
+<script src="/__/firebase/7.9.1/firebase-messaging.js"></script>
+<script src="/__/firebase/7.9.1/firebase-firestore.js"></script>
+<script src="/__/firebase/7.9.1/firebase-performance.js"></script>
+<script src="/__/firebase/init.js"></script>
+
+<script src="scripts/main.js"></script>
 </html>

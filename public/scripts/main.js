@@ -55,7 +55,7 @@ function isUserSignedIn() {
 }
 
 // Saves a new message on the Firebase DB.
-function saveMessage(entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
+function saveExitTic(entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
   // Add a new message entry into the database.
   console.log('Attempting to add to messages database')
   return firebase.firestore().collection('exit-tickets').add({
@@ -108,6 +108,7 @@ function saveMessagingDeviceToken() {
     if (currentToken) {
       console.log('Got FCM device token:', currentToken);
       // Saving the Device Token to the datastore
+      // TODO: Split tokens for categores (teachers/students? check-in/exit-ticket?)
       firebase.firestore().collection('fcmTokens').doc(currentToken).set({uid: firebase.auth().currentUser.uid});
     } else {
       // Need to request permissions to show notifications.
@@ -132,14 +133,14 @@ function requestNotificationsPermissions() {
 
 // Clear exit ticket
 function clearExitTicket(){
-  resetMaterialTextfield(exitTopic);
-  resetMaterialTextfield(exitQuestion);
+  //resetMaterialTextfield(exitTopic);
+  //resetMaterialTextfield(exitQuestion);
 }
 
 // Custom check-in
-function clearExitTicket(){
-  resetMaterialTextfield(pleaseKnow);
-  resetMaterialTextfield(contentQuestion);
+function clearCheckInForm(){
+  //resetMaterialTextfield(pleaseKnow);
+  //resetMaterialTextfield(contentQuestion);
 }
 
 // Triggered when a file is selected via the media picker.
@@ -177,7 +178,7 @@ function onExitTicketFormSubmit() {
   console.log(true == (exitTopic.value && getCheckedMethods() && exitLocation.value && exitTicketFormElement.elements["rating"].value && checkSignedInWithMessage()))
   // ^ Check that the user entered a message and is signed in.
   if (exitTopic.value && getCheckedMethods() && exitLocation.value && exitTicketFormElement.elements["rating"].value && checkSignedInWithMessage()) {
-    saveMessage(exitTopic.value, getCheckedMethods(), exitLocation.value, exitTicketFormElement.elements["rating"].value, exitQuestion.value).then(function() {
+    saveExitTicket(exitTopic.value, getCheckedMethods(), exitLocation.value, exitTicketFormElement.elements["rating"].value, exitQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
@@ -195,9 +196,9 @@ function onCheckInSubmit() {
   console.log(checkInFormElement.elements["rating"].value)
   console.log(pleaseKnow.value)
   console.log(contentQuestion.value)
-  console.log(true == (checkInFormElement.elements["rating"].value && pleaseKnow.value && contentQuestion.value && checkSignedInWithMessage()))
+  console.log(true == (checkInFormElement.elements["rating"].value && checkSignedInWithMessage()))
   // ^ Check that the user entered a message and is signed in.
-  if (checkInFormElement.elements["rating"].value && pleaseKnow.value && contentQuestion.value && checkSignedInWithMessage()) {
+  if (checkInFormElement.elements["rating"].value && checkSignedInWithMessage()) {
     saveCheckIn(checkInFormElement.elements["rating"].value, pleaseKnow.value, contentQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
@@ -213,7 +214,7 @@ function onMessageFormSubmit(e) {
   e.preventDefault();
   // Check that the user entered a message and is signed in.
   if (messageInputElement.value && checkSignedInWithMessage()) {
-    saveMessage(messageInputElement.value).then(function() {
+    saveExitTicket(messageInputElement.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       resetMaterialTextfield(messageInputElement);
       toggleButton();

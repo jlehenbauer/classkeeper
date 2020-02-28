@@ -3,11 +3,22 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // Exit-tickets
+    //  - Anyone can read exit tickets
+    //  - Anyone with a valid request may create an exit ticket
     match /exit-tickets/{messageId} {
       allow read;
-      allow create, update: if request.auth != null
+      allow create: if request.auth != null
                     && request.resource.data.name == request.auth.token.name;
-      allow delete: if false;
+      allow update, delete: if false;
+    }
+    // Check-ins
+    //  - Anyone can read check-in
+    //  - Anyone with a valid request may create a check-in
+    match /check-ins/{messageId} {
+      allow read;
+      allow create: if request.auth != null
+                    && request.resource.data.name == request.auth.token.name;
+      allow update, delete: if false;
     }
     // FCM Tokens:
     //   - Anyone can write their token.
