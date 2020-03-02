@@ -90,17 +90,6 @@ function saveCheckIn(feeling, pleaseKnow, contentQuestion) {
   return false;
 }
 
-// Loads chat messages history and listens for upcoming ones.
-function loadMessages() {
-  // TODO 8: Load and listens for new messages.
-}
-
-// Saves a new message containing an image in Firebase.
-// This first saves the image in Firebase storage.
-function saveImageMessage(file) {
-  // TODO 9: Posts a new image as a message.
-}
-
 // Saves the messaging device token to the datastore.
 function saveMessagingDeviceToken() {
   // TODO 10: Save the device token in the realtime datastore
@@ -294,14 +283,6 @@ function resetMaterialTextfield(element) {
   element.parentNode.MaterialTextfield.boundUpdateClassesHandler();
 }
 
-// Template for messages.
-var MESSAGE_TEMPLATE =
-    '<div class="message-container">' +
-      '<div class="spacing"><div class="pic"></div></div>' +
-      '<div class="message"></div>' +
-      '<div class="name"></div>' +
-    '</div>';
-
 // Adds a size to Google Profile pics URLs.
 function addSizeToGoogleProfilePic(url) {
   if (url.indexOf('googleusercontent.com') !== -1 && url.indexOf('?') === -1) {
@@ -312,96 +293,6 @@ function addSizeToGoogleProfilePic(url) {
 
 // A loading image URL.
 var LOADING_IMAGE_URL = 'https://www.google.com/images/spin-32.gif?a';
-
-// Delete a Message from the UI.
-function deleteMessage(id) {
-  var div = document.getElementById(id);
-  // If an element for that message exists we delete it.
-  if (div) {
-    div.parentNode.removeChild(div);
-  }
-}
-
-function createAndInsertMessage(id, timestamp) {
-  const container = document.createElement('div');
-  container.innerHTML = MESSAGE_TEMPLATE;
-  const div = container.firstChild;
-  div.setAttribute('id', id);
-
-  // If timestamp is null, assume we've gotten a brand new message.
-  // https://stackoverflow.com/a/47781432/4816918
-  timestamp = timestamp ? timestamp.toMillis() : Date.now();
-  div.setAttribute('timestamp', timestamp);
-
-  // figure out where to insert new message
-  const existingMessages = messageListElement.children;
-  if (existingMessages.length === 0) {
-    messageListElement.appendChild(div);
-  } else {
-    let messageListNode = existingMessages[0];
-
-    while (messageListNode) {
-      const messageListNodeTime = messageListNode.getAttribute('timestamp');
-
-      if (!messageListNodeTime) {
-        throw new Error(
-          `Child ${messageListNode.id} has no 'timestamp' attribute`
-        );
-      }
-
-      if (messageListNodeTime > timestamp) {
-        break;
-      }
-
-      messageListNode = messageListNode.nextSibling;
-    }
-
-    messageListElement.insertBefore(div, messageListNode);
-  }
-
-  return div;
-}
-
-// Displays a Message in the UI.
-function displayMessage(id, timestamp, name, text, picUrl, imageUrl) {
-  var div = document.getElementById(id) || createAndInsertMessage(id, timestamp);
-
-  // profile picture
-  if (picUrl) {
-    div.querySelector('.pic').style.backgroundImage = 'url(' + addSizeToGoogleProfilePic(picUrl) + ')';
-  }
-
-  div.querySelector('.name').textContent = name;
-  var messageElement = div.querySelector('.message');
-
-  if (text) { // If the message is text.
-    messageElement.textContent = text;
-    // Replace all line breaks by <br>.
-    messageElement.innerHTML = messageElement.innerHTML.replace(/\n/g, '<br>');
-  } else if (imageUrl) { // If the message is an image.
-    var image = document.createElement('img');
-    image.addEventListener('load', function() {
-      messageListElement.scrollTop = messageListElement.scrollHeight;
-    });
-    image.src = imageUrl + '&' + new Date().getTime();
-    messageElement.innerHTML = '';
-    messageElement.appendChild(image);
-  }
-  // Show the card fading-in and scroll to view the new message.
-  setTimeout(function() {div.classList.add('visible')}, 1);
-  messageListElement.scrollTop = messageListElement.scrollHeight;
-  messageInputElement.focus();
-}
-
-// Enables or disables the submit button depending on the values of the input
-// fields.
-function toggleButton() {
-  if (messageInputElement.value) {
-    submitButtonElement.removeAttribute('disabled');
-  } else {
-    submitButtonElement.setAttribute('disabled', 'true');
-  }
-}
 
 // Checks that the Firebase SDK has been correctly setup and configured.
 function checkSetup() {
@@ -428,18 +319,9 @@ function getCheckedMethods() {
 checkSetup();
 
 // Shortcuts to DOM Elements for chat service.
-var messageListElement = document.getElementById('messages');
-var messageFormElement = document.getElementById('message-form');
-var messageInputElement = document.getElementById('message');
-var imageButtonElement = document.getElementById('submitImage');
-var imageFormElement = document.getElementById('image-form');
-var mediaCaptureElement = document.getElementById('mediaCapture');
-var userPicElement = document.getElementById('user-pic');
 var userNameElement = document.getElementById('user-name');
 var signInButtonElement = document.getElementById('sign-in');
 var signOutButtonElement = document.getElementById('sign-out');
-var signInSnackbarElement = document.getElementById('must-signin-snackbar');
-
 
 // Shortcuts to DOB Elements for Class Keeper
 // User Elements
@@ -447,7 +329,7 @@ var profileImage = document.getElementById('profile_img');
 var userEmail = '';
 var userFirstName = document.getElementById('first-name');
 
-// Form Elements
+// Exit Ticket Form Elements
 var exitTicketFormElement = document.getElementById('exit-ticket-form');
 var checkInFormElement = document.getElementById('check-in');
 var exitTopic = document.getElementById('topic');
@@ -464,8 +346,6 @@ var pleaseKnow = document.getElementById('need-to-know');
 var contentQuestion = document.getElementById('content-question');
 var teacherButton = document.getElementById('teacher');
 
-
-
 // Saves exit ticket on submission
 if (exitTicketFormElement) {
   exitTicketFormElement.addEventListener('submita', onExitTicketFormSubmit);
@@ -475,25 +355,11 @@ if (checkInFormElement) {
 }
 
 // Saves message on form submit.
-//messageFormElement.addEventListener('submita', onMessageFormSubmit);
 signOutButtonElement.addEventListener('click', signOut);
 signInButtonElement.addEventListener('click', signIn);
 
 // Triggers notification dialog for teachers
 teacherButton.addEventListener('click', notificationsForTeachers);
-
-// Toggle for the button.
-//messageInputElement.addEventListener('keyup', toggleButton);
-//messageInputElement.addEventListener('change', toggleButton);
-
-// Events for image upload.
-/*
-imageButtonElement.addEventListener('click', function(e) {
-  e.preventDefault();
-  mediaCaptureElement.click();
-});
-mediaCaptureElement.addEventListener('change', onMediaFileSelected);
-*/
 
 // initialize Firebase
 initFirebaseAuth();
