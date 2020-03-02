@@ -125,14 +125,23 @@ function requestNotificationsPermissions() {
 
 // Clear exit ticket
 function clearExitTicket(){
-  //resetMaterialTextfield(exitTopic);
-  //resetMaterialTextfield(exitQuestion);
+  var rating = parseInt(exitTicketFormElement.elements["rating"].value);
+  for (const item of Array(exitMethods.length).keys()) {
+    exitMethods[item].checked = false;
+  }
+  exitTicketFormElement.elements["rating"][rating - 1].checked = false;
+  exitTopic.value = '';
+  exitLocation = '';
+  exitQuestion = '';
+
 }
 
 // Custom check-in
 function clearCheckInForm(){
-  //resetMaterialTextfield(pleaseKnow);
-  //resetMaterialTextfield(contentQuestion);
+  var rating = parseInt(checkInFormElement.elements["rating"].value);
+  checkInFormElement.elements["rating"][rating - 1].checked = false;
+  pleaseKnow.value = "";
+  contentQuestion.value = "";
 }
 
 // Triggered when a file is selected via the media picker.
@@ -161,21 +170,22 @@ function onMediaFileSelected(event) {
 // Class Keeper: Triggered when the send new message form is submitted.
 function onExitTicketFormSubmit() {
   //e.preventDefault();
-  console.log("Check-in being sent.")
-  console.log(exitTopic.value)
-  console.log(getCheckedMethods())
-  console.log(exitLocation.value)
-  console.log(exitTicketFormElement.elements["rating"].value)
-  console.log(exitQuestion.value)
-  console.log(true == (exitTopic.value && getCheckedMethods() && exitLocation.value && exitTicketFormElement.elements["rating"].value && checkSignedInWithMessage()))
+  var rating = exitTicketFormElement.elements["rating"].value;
+  console.log("Check-in being sent.");
+  console.log(exitTopic.value);
+  console.log(getCheckedMethods());
+  console.log(exitLocation.value);
+  console.log(rating);
+  console.log(exitQuestion.value);
+  console.log(true == (exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()))
   // ^ Check that the user entered a message and is signed in.
-  if (exitTopic.value && getCheckedMethods() && exitLocation.value && exitTicketFormElement.elements["rating"].value && checkSignedInWithMessage()) {
-    saveExitTicketket(exitTopic.value, getCheckedMethods(), exitLocation.value, exitTicketFormElement.elements["rating"].value, exitQuestion.value).then(function() {
+  if (exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()) {
+    saveExitTicket(exitTopic.value, getCheckedMethods(), exitLocation.value, rating, exitQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
       clearExitTicket();
-
+      reportSubmission(rating);
     });
   }
   return false;
@@ -184,18 +194,20 @@ function onExitTicketFormSubmit() {
 // Class Keeper: Triggered when the send check-in is submitted.
 function onCheckInSubmit() {
   //e.preventDefault();
-  console.log("Exit ticket being sent.")
-  console.log(checkInFormElement.elements["rating"].value)
-  console.log(pleaseKnow.value)
-  console.log(contentQuestion.value)
-  console.log(true == (checkInFormElement.elements["rating"].value && checkSignedInWithMessage()))
+  var rating = checkInFormElement.elements["rating"].value;
+  console.log("Exit ticket being sent.");
+  console.log(rating);
+  console.log(pleaseKnow.value);
+  console.log(contentQuestion.value);
+  console.log(true == (rating && checkSignedInWithMessage()));
   // ^ Check that the user entered a message and is signed in.
-  if (checkInFormElement.elements["rating"].value && checkSignedInWithMessage()) {
-    saveCheckIn(checkInFormElement.elements["rating"].value, pleaseKnow.value, contentQuestion.value).then(function() {
+  if (rating && checkSignedInWithMessage()) {
+    saveCheckIn(rating, pleaseKnow.value, contentQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
       clearCheckInForm();
+      reportSubmission(rating);
     });
   }
   return false;
@@ -208,7 +220,7 @@ function onMessageFormSubmit(e) {
   if (messageInputElement.value && checkSignedInWithMessage()) {
     saveExitTicketket(messageInputElement.value).then(function() {
       // Clear message text field and re-enable the SEND button.
-      resetMaterialTextfield(messageInputElement);
+      // resetMaterialTextfield(messageInputElement);
       toggleButton();
     });
   }
@@ -315,6 +327,19 @@ function getCheckedMethods() {
   return methods;
 }
 
+// Reports that a check-in has been logged
+function reportSubmission() {
+  modal.style.display = "block";
+  modalClose.onclick = function() {
+    modal.style.display = "none";
+  }
+  window.onclick = function(e) {
+    if (e.target == modal) {
+      modal.style.display = "none";
+    }
+  }
+}
+
 // Checks that Firebase has been imported.
 checkSetup();
 
@@ -331,39 +356,38 @@ var userFirstName = document.getElementById('first-name');
 
 // Exit Ticket Form Elements
 var exitTicketFormElement = document.getElementById('exit-ticket-form');
-var checkInFormElement = document.getElementById('check-in');
 var exitTopic = document.getElementById('topic');
 var exitMethods = document.getElementsByName('checklist');
 var exitLocation = document.getElementById('location');
 var exitRating = document.getElementById('rating_radio');
 var exitQuestion = document.getElementById('student-question');
-var submitButtonElement = document.getElementById('submita');
+var submitButtonElement = document.getElementById('submit-exit-ticket');
 
 // Check-in Form Elements
+var checkInFormElement = document.getElementById('check-in');
 var submitCheckInButton = document.getElementById('submit');
 var feeling = document.getElementById('feeling');
 var pleaseKnow = document.getElementById('need-to-know');
 var contentQuestion = document.getElementById('content-question');
 var teacherButton = document.getElementById('teacher');
+var modal = document.getElementById("confirmation");
+var modalClose = document.getElementsByClassName("close")[0];
 
 // Saves exit ticket on submission
 if (exitTicketFormElement) {
-  exitTicketFormElement.addEventListener('submita', onExitTicketFormSubmit);
+  submitButtonElement.addEventListener('click', onExitTicketFormSubmit);
 }
 if (checkInFormElement) {
   checkInFormElement.addEventListener('submit', onCheckInSubmit);
+  // Triggers notification dialog for teachers
+  teacherButton.addEventListener('click', notificationsForTeachers);
 }
 
 // Saves message on form submit.
 signOutButtonElement.addEventListener('click', signOut);
 signInButtonElement.addEventListener('click', signIn);
 
-// Triggers notification dialog for teachers
-teacherButton.addEventListener('click', notificationsForTeachers);
 
 // initialize Firebase
 initFirebaseAuth();
 // TODO: Enable Firebase Performance Monitoring.
-
-// We load currently existing chat messages and listen to new ones.
-loadMessages();
