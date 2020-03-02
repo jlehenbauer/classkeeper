@@ -24,11 +24,12 @@ exports.sendNotifications = functions.firestore.document('check-ins/{messageId}'
     const payload = {
       notification: {
         title: `${snapshot.data().name} checked in at a ${snapshot.data().feeling}`,
-        body: know ? ('You should know: ' + know) : '' + question ? ('Asked: ' + question) : '',
+        body: (know ? ('You should know: ' + know) : '') + (question ? ('Asked: ' + question) : ''),
         icon: snapshot.data().profilePicUrl || '/images/profile_placeholder.png',
         click_action: `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com`,
       }
     };
+    // DEBUG: console.log('Successfully created notification payload');
 
     // Get the list of device tokens.
     const allTokens = await admin.firestore().collection('fcmTokens').get();

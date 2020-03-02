@@ -55,7 +55,7 @@ function isUserSignedIn() {
 }
 
 // Saves a new message on the Firebase DB.
-function saveExitTic(entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
+function saveExitTicket(entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
   // Add a new message entry into the database.
   console.log('Attempting to add to messages database')
   return firebase.firestore().collection('exit-tickets').add({
@@ -109,7 +109,10 @@ function saveMessagingDeviceToken() {
       console.log('Got FCM device token:', currentToken);
       // Saving the Device Token to the datastore
       // TODO: Split tokens for categores (teachers/students? check-in/exit-ticket?)
-      firebase.firestore().collection('fcmTokens').doc(currentToken).set({uid: firebase.auth().currentUser.uid});
+      firebase.firestore().collection('fcmTokens').doc(currentToken).set({
+        uid: firebase.auth().currentUser.uid,
+        role: 'teacher'
+      });
     } else {
       // Need to request permissions to show notifications.
       requestNotificationsPermissions();
@@ -127,7 +130,7 @@ function requestNotificationsPermissions() {
     // Notification permission granted.
     saveMessagingDeviceToken();
   }).catch(function(error) {
-    console.error('Unable to get permission to notify.', error);
+    console.log('Denied permission to give notifications.');
   });
 }
 
@@ -178,7 +181,7 @@ function onExitTicketFormSubmit() {
   console.log(true == (exitTopic.value && getCheckedMethods() && exitLocation.value && exitTicketFormElement.elements["rating"].value && checkSignedInWithMessage()))
   // ^ Check that the user entered a message and is signed in.
   if (exitTopic.value && getCheckedMethods() && exitLocation.value && exitTicketFormElement.elements["rating"].value && checkSignedInWithMessage()) {
-    saveExitTicket(exitTopic.value, getCheckedMethods(), exitLocation.value, exitTicketFormElement.elements["rating"].value, exitQuestion.value).then(function() {
+    saveExitTicketket(exitTopic.value, getCheckedMethods(), exitLocation.value, exitTicketFormElement.elements["rating"].value, exitQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
@@ -214,7 +217,7 @@ function onMessageFormSubmit(e) {
   e.preventDefault();
   // Check that the user entered a message and is signed in.
   if (messageInputElement.value && checkSignedInWithMessage()) {
-    saveExitTicket(messageInputElement.value).then(function() {
+    saveExitTicketket(messageInputElement.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       resetMaterialTextfield(messageInputElement);
       toggleButton();
@@ -251,9 +254,6 @@ function authStateObserver(user) {
 
     // Hide sign-in button.
     signInButtonElement.setAttribute('hidden', 'true');
-
-    // We save the Firebase Messaging Device token and enable notifications.
-    saveMessagingDeviceToken();
   } else { // User is signed out!
     console.log("User is not signed in");
     // Hide user's profile and sign-out button.
@@ -280,6 +280,12 @@ function checkSignedInWithMessage() {
   };
   //signInSnackbarElement.MaterialSnackbar.showSnackbar(data);
   return false;
+}
+
+// Enable notifications for teachers
+function notificationsForTeachers() {
+  // We save the Firebase Messaging Device token and enable notifications.
+  saveMessagingDeviceToken();
 }
 
 // Resets the given MaterialTextField.
@@ -456,6 +462,7 @@ var submitCheckInButton = document.getElementById('submit');
 var feeling = document.getElementById('feeling');
 var pleaseKnow = document.getElementById('need-to-know');
 var contentQuestion = document.getElementById('content-question');
+var teacherButton = document.getElementById('teacher');
 
 
 
@@ -471,6 +478,9 @@ if (checkInFormElement) {
 //messageFormElement.addEventListener('submita', onMessageFormSubmit);
 signOutButtonElement.addEventListener('click', signOut);
 signInButtonElement.addEventListener('click', signIn);
+
+// Triggers notification dialog for teachers
+teacherButton.addEventListener('click', notificationsForTeachers);
 
 // Toggle for the button.
 //messageInputElement.addEventListener('keyup', toggleButton);
