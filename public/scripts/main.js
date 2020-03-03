@@ -90,8 +90,18 @@ function saveCheckIn(feeling, pleaseKnow, contentQuestion) {
   return false;
 }
 
+// User is a student. Save messaging token for later, but mark as a student
+function userIsStudent() {
+  saveMessagingDeviceToken('student');
+}
+
+// User is a teacher. Save messaging token to enable notifications and label as teacher
+function userIsTeacher() {
+  saveMessagingDeviceToken('teacher');
+}
+
 // Saves the messaging device token to the datastore.
-function saveMessagingDeviceToken() {
+function saveMessagingDeviceToken(userRole) {
   // TODO 10: Save the device token in the realtime datastore
   firebase.messaging().getToken().then(function(currentToken) {
     if (currentToken) {
@@ -100,7 +110,7 @@ function saveMessagingDeviceToken() {
       // TODO: Split tokens for categores (teachers/students? check-in/exit-ticket?)
       firebase.firestore().collection('fcmTokens').doc(currentToken).set({
         uid: firebase.auth().currentUser.uid,
-        role: 'teacher'
+        role: userRole
       });
     } else {
       // Need to request permissions to show notifications.
@@ -372,6 +382,8 @@ var contentQuestion = document.getElementById('content-question');
 var teacherButton = document.getElementById('teacher');
 var modal = document.getElementById("confirmation");
 var modalClose = document.getElementsByClassName("close")[0];
+var teacherRoleButton = document.getElementById('role-teacher-button');
+var studentRoleButton = document.getElementById('role-student-button');
 
 // Saves exit ticket on submission
 if (exitTicketFormElement) {
@@ -381,6 +393,8 @@ if (checkInFormElement) {
   checkInFormElement.addEventListener('submit', onCheckInSubmit);
   // Triggers notification dialog for teachers
   teacherButton.addEventListener('click', notificationsForTeachers);
+  teacherRoleButton.addEventListener('click', userIsTeacher);
+  studentRoleButton.addEventListener('click', userIsStudent);
 }
 
 // Saves message on form submit.

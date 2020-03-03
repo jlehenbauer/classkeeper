@@ -118,20 +118,34 @@
         </div>
       </form>
     </div>
-    <div class="btn-block">
+    <div class="btn-block" hidden>
         <button id="teacher">Teachers click here to enable notifications</button>
     </div>
 
-    <!-- The Modal -->
+    <!-- Confirmation Modal -->
     <div id="confirmation" class="modal">
-
-      <!-- Modal content -->
       <div class="modal-content">
         <span class="close">&times;</span>
         <p>Thank you for submitting your check-in!</p>
       </div>
-
     </div>
+
+    <!-- Role Modal -->
+    <div id="role-modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="hello-name">Hello!</h2>
+        <h3>It looks like this is your first time logging in. Please select your role:</h3>
+        <div style='display: inline-block'>
+          <div>
+            <button id="role-teacher-button">Teacher</button>
+          </div>
+          <div>
+            <button id="role-student-button">Student</button>
+          </div>
+      </div>
+    </div>
+
   </body>
 
 <!-- Import and configure the Firebase SDK -->
