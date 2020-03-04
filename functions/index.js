@@ -11,9 +11,6 @@ exports.addWelcomeMessages = functions.auth.user().onCreate(async (user) => {
 
   // TODO: 
   //  - make popup modal
-  var roleModal = document.getElementById('role-modal');
-  var modalClose = document.getElementsByClassName("close")[1];
-  displayRoleModal();
   //  - *await function* ask for code to link to teacher
 });
 
@@ -69,19 +66,6 @@ function cleanupTokens(response, tokens) {
    }
  });
  return Promise.all(tokensDelete);
-}
-
-// Opens the 
-function displayRoleModal() {
-  roleModal.style.display = "block";
-  modalClose.onclick = function() {
-    roleModal.style.display = "none";
-  }
-  window.onclick = function(e) {
-    if (e.target == modal) {
-      roleModal.style.display = "none";
-    }
-  }
 }
 
 // // Create and Deploy Your First Cloud Functions

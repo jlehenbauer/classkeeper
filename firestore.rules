@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Exit-tickets
+    // Exit-tickets:
     //  - Anyone can read exit tickets
     //  - Anyone with a valid request may create an exit ticket
     match /exit-tickets/{messageId} {
@@ -11,7 +11,7 @@ service cloud.firestore {
                     && request.resource.data.name == request.auth.token.name;
       allow update, delete: if false;
     }
-    // Check-ins
+    // Check-ins:
     //  - Anyone can read check-in
     //  - Anyone with a valid request may create a check-in
     match /check-ins/{messageId} {
@@ -19,6 +19,18 @@ service cloud.firestore {
       allow create: if request.auth != null
                     && request.resource.data.name == request.auth.token.name;
       allow update, delete: if false;
+    }
+    // Users:
+    //  - Anyone can be added as new user
+    //  - Users can only update themselves
+    //  - TODO: phase out FCM Tokens and incorporate with User
+    match /users/{uid} {
+      allow read;
+      allow create: if request.auth != null
+                    && request.resource.data.name = request.auth.token.name;
+      allow update: if request.auth != null
+                    && request.resource.data.name = request.auth.token.name;
+      allow delete: if false;
     }
     // FCM Tokens:
     //   - Anyone can write their token.
