@@ -20,6 +20,14 @@ function signIn(googleUser) {
   // Sign in Firebase using popup auth and Google as the identity provider.
   var provider = new firebase.auth.GoogleAuthProvider();
   firebase.auth().signInWithPopup(provider);
+
+  // Sign-in Promise
+  var signInPromise = new Promise(function(resolve, error) {
+    resolve(firebase.auth().currentUser);
+  });
+
+  return signInPromise;
+
 }
 
 // Signs-out of Class Keeper
@@ -92,12 +100,14 @@ function saveCheckIn(feeling, pleaseKnow, contentQuestion) {
 
 // User is a student. Save messaging token for later, but mark as a student
 function userIsStudent() {
-  saveMessagingDeviceToken('student');
+  role = 'student';
+  signIn();
 }
 
 // User is a teacher. Save messaging token to enable notifications and label as teacher
 function userIsTeacher() {
-  saveMessagingDeviceToken('teacher');
+  role = 'teacher';
+  signIn();
 }
 
 // Saves the messaging device token to the datastore.
@@ -108,9 +118,11 @@ function saveMessagingDeviceToken(userRole) {
       console.log('Got FCM device token:', currentToken);
       // Saving the Device Token to the datastore
       // TODO: Split tokens for categores (teachers/students? check-in/exit-ticket?)
-      firebase.firestore().collection('fcmTokens').doc(currentToken).set({
+      firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).set({
         uid: firebase.auth().currentUser.uid,
-        role: userRole
+        role: userRole,
+        email: firebase.auth().currentUser.email,
+        token: currentToken
       });
     } else {
       // Need to request permissions to show notifications.
@@ -262,6 +274,9 @@ function authStateObserver(user) {
     //userNameElement.removeAttribute('hidden');
     profileImage.removeAttribute('hidden');
     signOutButtonElement.removeAttribute('hidden');
+    roleModal.style.display = "none";
+  
+    saveMessagingDeviceToken(role);
 
     // Hide sign-in button.
     signInButtonElement.setAttribute('hidden', 'true');
@@ -271,6 +286,9 @@ function authStateObserver(user) {
     //userNameElement.setAttribute('hidden', 'true');
     profileImage.setAttribute('hidden', 'true');
     signOutButtonElement.setAttribute('hidden', 'true');
+
+    // Show role modal
+    roleSignIn();
 
     // Show sign-in button.
     signInButtonElement.removeAttribute('hidden');
@@ -337,7 +355,7 @@ function getCheckedMethods() {
   return methods;
 }
 
-// Reports that a check-in has been logged
+// Reports to the user that a check-in has been logged
 function reportSubmission() {
   modal.style.display = "block";
   modalClose.onclick = function() {
@@ -346,6 +364,19 @@ function reportSubmission() {
   window.onclick = function(e) {
     if (e.target == modal) {
       modal.style.display = "none";
+    }
+  }
+}
+
+// Reports to the user that a check-in has been logged
+function roleSignIn() {
+  roleModal.style.display = "block";
+  modalClose.onclick = function() {
+    roleModal.style.display = "none";
+  }
+  window.onclick = function(e) {
+    if (e.target == modal) {
+      roleModal.style.display = "none";
     }
   }
 }
@@ -384,6 +415,11 @@ var modal = document.getElementById("confirmation");
 var modalClose = document.getElementsByClassName("close")[0];
 var teacherRoleButton = document.getElementById('role-teacher-button');
 var studentRoleButton = document.getElementById('role-student-button');
+
+
+var roleModal = document.getElementById('role-modal');
+var role = ''
+var modalClose = document.getElementsByClassName("close")[1];
 
 // Saves exit ticket on submission
 if (exitTicketFormElement) {

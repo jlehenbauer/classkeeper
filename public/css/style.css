@@ -243,9 +243,9 @@ html, body {
       .modal-content {
         background-color: #fefefe;
         margin: auto;
-        padding: 20px;
+        padding: 25px;
         border: 1px solid #888;
-        width: 80%;
+        width: 50%;
       }
 
       /* The Close Button */

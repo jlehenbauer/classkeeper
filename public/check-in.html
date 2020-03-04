@@ -13,7 +13,10 @@
   </head>
   <body>
     <div class="sign-in-header" align="center">
-      <button id="sign-in" hidden>Sign in</button>
+      <div class="sign-in-buttons" style="display: inline-block;">
+        <button id="sign-in" hidden>Student Sign up</button>
+        <button id="sign-in-teacher" hidden>Teacher Sign Up</button>
+      </div>
       <img class="profile-image" id="profile_img" src="#" hidden/>
       <br>
       <button id="sign-out" href="#" hidden>Sign out</button>
@@ -131,17 +134,16 @@
     </div>
 
     <!-- Role Modal -->
-    <div id="role-modal" class="modal">
-      <div class="modal-content">
+    <div id="role-modal" class="modal" hidden>
+      <div class="modal-content" style="align-items: center">
         <span class="close">&times;</span>
         <h2 id="hello-name">Hello!</h2>
         <h3>It looks like this is your first time logging in. Please select your role:</h3>
-        <div style='display: inline-block'>
-          <div>
-            <button id="role-teacher-button">Teacher</button>
-          </div>
-          <div>
-            <button id="role-student-button">Student</button>
+        <p>If you have logged in before, feel free to close this and use the sign-in button.</p>
+        <div style='align-content: center'>
+          <div style="align-content: center">
+            <button id="role-teacher-button" style="margin: 1.5em">Teacher</button>
+            <button id="role-student-button" style="margin: 1.5em">Student</button>
           </div>
       </div>
     </div>
