@@ -27,9 +27,9 @@ service cloud.firestore {
     match /users/{uid} {
       allow read;
       allow create: if request.auth != null
-                    && request.resource.data.name = request.auth.token.name;
+                    && request.resource.data.name == request.auth.token.name;
       allow update: if request.auth != null
-                    && request.resource.data.name = request.auth.token.name;
+                    && request.resource.data.name == request.auth.token.name;
       allow delete: if false;
     }
     // FCM Tokens:
