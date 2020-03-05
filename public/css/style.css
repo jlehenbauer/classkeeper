@@ -100,7 +100,7 @@ html, body {
       opacity: 0;
       cursor: pointer;
       }
-      /** Uncomment these sections when moving back to stylized checkboxes
+      /** Uncomment these sections when moving back to stylized checkboxes **/
       input[type=radio], input[type=checkbox]  {
       display: none;
       }
@@ -111,7 +111,6 @@ html, body {
       margin: 13px;
       cursor: pointer;
       }
-      **/
       .question span {
       margin-left: 30px;
       }
@@ -119,7 +118,7 @@ html, body {
       margin-left: 0;
       color: red;
       }
-      /** Uncomment these sections when moving back to stylized checkboxes
+      /** Uncomment these sections when moving back to stylized checkboxes **/
       .checkbox-item label {
       margin: 5px 20px 10px 0;
       }
@@ -142,7 +141,7 @@ html, body {
       border-radius: 2px;
       border: 1px solid #095484;
       }
-      **/
+      
       table.ratings{
                   table-layout: fixed;
                   width: 100%;
@@ -156,7 +155,7 @@ html, body {
                   padding: 0px;
             }
       }
-      /** Uncomment these sections when moving back to stylized checkboxes
+      /** Uncomment these sections when moving back to stylized checkboxes **/
       input[type=checkbox]:checked + .check:before {
       background: #095484;
       }
@@ -183,7 +182,6 @@ html, body {
       input[type=radio]:checked + label:after, input[type=checkbox]:checked + label:after {
       opacity: 1;
       }
-      **/
       .btn-block {
       margin-top: 10px;
       text-align: center;

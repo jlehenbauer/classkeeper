@@ -16,19 +16,20 @@
 'use strict';
 
 // Signs-in Class Keeper
-function signIn(googleUser) {
+async function signIn(googleUser) {
   // Sign in Firebase using popup auth and Google as the identity provider.
   var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider);
-
-  // Sign-in Promise
-  var signInPromise = new Promise(function(resolve, error) {
-    resolve(firebase.auth().currentUser);
+  return firebase.auth().signInWithPopup(provider).then(function(user) {
+    // DEBUG: console.log(firebase.auth().currentUser);
+    // DEBUG: console.log(role);
+    saveMessagingDeviceToken(role);
   });
-
-  return signInPromise;
-
 }
+
+// Sign-in Promise
+var signInPromise = new Promise(async function(resolve, error) {
+  await resolve(signIn);
+});
 
 // Signs-out of Class Keeper
 function signOut() {
@@ -105,32 +106,84 @@ function userIsStudent() {
 }
 
 // User is a teacher. Save messaging token to enable notifications and label as teacher
-function userIsTeacher() {
+async function userIsTeacher() {
   role = 'teacher';
   signIn();
 }
 
+
 // Saves the messaging device token to the datastore.
-function saveMessagingDeviceToken(userRole) {
+async function saveMessagingDeviceToken(userRole) {
   // TODO 10: Save the device token in the realtime datastore
-  firebase.messaging().getToken().then(function(currentToken) {
-    if (currentToken) {
-      console.log('Got FCM device token:', currentToken);
-      // Saving the Device Token to the datastore
-      // TODO: Split tokens for categores (teachers/students? check-in/exit-ticket?)
-      firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).set({
-        uid: firebase.auth().currentUser.uid,
-        role: userRole,
-        email: firebase.auth().currentUser.email,
-        token: currentToken
-      });
-    } else {
-      // Need to request permissions to show notifications.
-      requestNotificationsPermissions();
-    }
-  }).catch(function(error){
-    console.error('Unable to get messaging token.', error);
-  });
+  let user = firebase.auth().currentUser;
+  if (userRole == 'student' && !firebase.firestore().collection('users').doc(user.uid)) {
+    // Add student to the database without further action
+    firebase.firestore().collection('users').doc(user.uid).set({
+      name: getUserName(),
+      role: userRole,
+      email: user.email,
+      // LATER: use for sending notifications to students
+      // token: currentToken,
+      codes: []
+    });
+  }
+  // Update student information but keep any codes they've added
+  else if (userRole == 'student') {
+    let userData = firebase.firestore().collection('users').doc(user.uid).get();
+    firebase.firestore().collection('users').doc(user.uid).set({
+      name: getUserName(),
+      role: userRole,
+      email: user.email,
+      // LATER: use for sending notifications to students
+      // token: currentToken,
+      codes: userData.data().codes
+    });
+  }
+  else if (userRole == 'teacher' && !firebase.firestore().collection('users').doc(user.uid)) {
+    firebase.messaging().getToken().then(function(currentToken) {
+      if (currentToken) {
+        console.log('Adding/updating user in database:', currentToken);
+        // console.log(firebase.auth().currentUser);
+        // Saving the Device Token to the datastore
+        // TODO: Split tokens for categores (teachers/students? check-in/exit-ticket?)
+        firebase.firestore().collection('users').doc(user.uid).set({
+          name: getUserName(),
+          role: userRole,
+          email: user.email,
+          token: currentToken,
+          codes: []
+        });
+      } else {
+        // Need to request permissions to show notifications.
+        requestNotificationsPermissions();
+      }
+    }).catch(function(error){
+      console.error('Unable to get messaging token.', error);
+    });
+  }  
+  else if (userRole == 'teacher') {
+    let userData = await firebase.firestore().collection('users').doc(user.uid).get();
+    firebase.messaging().getToken().then(function(currentToken) {
+      if (currentToken) {
+        console.log('Adding/updating user in database:', currentToken);
+        // console.log(firebase.auth().currentUser);
+        // Saving the Device Token to the datastore
+        // TODO: Split tokens for categores (teachers/students? check-in/exit-ticket?)
+        firebase.firestore().collection('users').doc(user.uid).set({
+          name: getUserName(),
+          role: userRole,
+          email: user.email,
+          token: currentToken,
+          codes: userData.data().codes
+        });
+      } else {
+        // Need to request permissions to show notifications.
+        requestNotificationsPermissions();
+      }
+    }).catch(function(error){
+      console.error('Unable to get messaging token.', error);
+    });
+  }  
 }
 
 // Requests permissions to show notifications.
@@ -275,8 +328,6 @@ function authStateObserver(user) {
     profileImage.removeAttribute('hidden');
     signOutButtonElement.removeAttribute('hidden');
     roleModal.style.display = "none";
-  
-    saveMessagingDeviceToken(role);
 
     // Hide sign-in button.
     signInButtonElement.setAttribute('hidden', 'true');
@@ -311,6 +362,7 @@ function checkSignedInWithMessage() {
   return false;
 }
 
+// TODO: Remove this
 // Enable notifications for teachers
 function notificationsForTeachers() {
   // We save the Firebase Messaging Device token and enable notifications.
