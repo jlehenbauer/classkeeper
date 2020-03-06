@@ -26,6 +26,14 @@
       <form action="#" id="check-in" onsubmit="return false">
         <h1>Check-in</h1>
         <p>Welcome to class!</p>
+        <div class="question" id="class-list" hidden>
+            <h2>Please select the class you're in<span class="required">*</span></h2>
+            <div class="question-answer">
+                <select id="current-class">
+                <option class="disabled" value="please-select" disabled selected></option>Please Select</option>
+                </select>
+            </div>
+        </div>
         <h2>What is your first name?</h2>
         <div class="name">
           <input id="first-name" type="text" name="name" placeholder="First" />
@@ -120,9 +128,6 @@
             <button id="submit">Submit</button>
         </div>
       </form>
-    </div>
-    <div class="btn-block" hidden>
-        <button id="teacher">Teachers click here to enable notifications</button>
     </div>
 
     <!-- Confirmation Modal -->

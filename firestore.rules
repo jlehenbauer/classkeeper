@@ -25,11 +25,11 @@ service cloud.firestore {
     //  - Users can only update themselves
     //  - TODO: phase out FCM Tokens and incorporate with User
     match /users/{uid} {
-      allow read;
-      allow create: if request.auth != null
-                    && request.resource.data.name == request.auth.token.name;
-      allow update: if request.auth != null
-                    && request.resource.data.name == request.auth.token.name;
+      allow read, create, update;
+      //allow create: if request.auth != null
+      //              && request.resource.data.name == request.auth.token.name;
+      //allow update: if request.auth != null
+      //              && request.resource.data.name == request.auth.token.name;
       allow delete: if false;
     }
     // FCM Tokens:

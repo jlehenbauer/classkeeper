@@ -21,23 +21,34 @@ exports.sendNotifications = functions.firestore.document('check-ins/{messageId}'
     // Notification details.
     const question = snapshot.data().question;
     const know = snapshot.data().pleaseKnow;
+    // const classCode  = snapshot.data().code;
     const payload = {
       notification: {
         title: `${snapshot.data().name} checked in at a ${snapshot.data().feeling}`,
         body: (know ? ('You should know: ' + know) : '') + (question ? ('Asked: ' + question) : ''),
-        icon: snapshot.data().profilePicUrl || '/images/profile_placeholder.png',
+        icon: snapshot.data().profile_img || '/images/profile_placeholder.png',
         click_action: `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com`,
       }
     };
     // DEBUG: console.log('Successfully created notification payload');
 
     // Get the list of device tokens.
+    /**
     const allTokens = await admin.firestore().collection('fcmTokens').get();
     const tokens = [];
     allTokens.forEach((tokenDoc) => {
       // DEBUG: console.log(tokenDoc.data().role);
       if (tokenDoc.data().role == 'teacher') {
         tokens.push(tokenDoc.id);
+      }
+    });
+    **/
+    const allTokens = await admin.firestore().collection('users').get();
+    const tokens = [];
+    allTokens.forEach((tokenDoc) => {
+      // DEBUG: console.log(tokenDoc.data().role);
+      if (tokenDoc.data().role == 'teacher') {
+        tokens.push(tokenDoc.data().token);
       }
     });
 

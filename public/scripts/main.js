@@ -70,6 +70,7 @@ function saveExitTicket(entryTopic, entryMethod, entryLocation, entryRating, ent
   return firebase.firestore().collection('exit-tickets').add({
     name: getUserName(),
     email: getEmail(),
+    profile_img: getProfilePicUrl(),
     topic: entryTopic,
     methods: entryMethod,
     location: entryLocation,
@@ -89,6 +90,7 @@ function saveCheckIn(feeling, pleaseKnow, contentQuestion) {
   return firebase.firestore().collection('check-ins').add({
     name: getUserName(),
     email: getEmail(),
+    profile_img: getProfilePicUrl(),
     feeling: feeling,
     pleaseKnow: pleaseKnow,
     question: contentQuestion,
@@ -196,6 +198,24 @@ function requestNotificationsPermissions() {
   }).catch(function(error) {
     console.log('Denied permission to give notifications.');
   });
+}
+
+// Add subscribed classes to list of choices
+async function displayClassLists(user) {
+  let userData = await firebase.firestore().collection('users').doc(user.uid).get();
+  let classCodes = userData.data().codes;
+  console.log(classCodes);
+  if (classCodes != []) {
+    var classListElement = document.getElementById('current-class');
+    for (let code of classCodes) {
+      console.log(code);
+      var newListItem = document.createElement('option');
+      newListItem.id = code;
+      newListItem.innerHTML = code;
+      classListElement.appendChild(newListItem)
+    }
+    document.getElementById('class-list').removeAttribute('hidden');
+  }
 }
 
 // Clear exit ticket
@@ -323,6 +343,8 @@ function authStateObserver(user) {
     //userPicElement.style.backgroundImage = 'url(' + addSizeToGoogleProfilePic(profilePicUrl) + ')';
     //userNameElement.textContent = userName;
 
+    displayClassLists(firebase.auth().currentUser);
+
     // Show user's profile and sign-out button.
     //userNameElement.removeAttribute('hidden');
     profileImage.removeAttribute('hidden');
@@ -362,13 +384,6 @@ function checkSignedInWithMessage() {
   return false;
 }
 
-// TODO: Remove this
-// Enable notifications for teachers
-function notificationsForTeachers() {
-  // We save the Firebase Messaging Device token and enable notifications.
-  saveMessagingDeviceToken();
-}
-
 // Resets the given MaterialTextField.
 function resetMaterialTextfield(element) {
   element.value = '';
@@ -382,9 +397,6 @@ function addSizeToGoogleProfilePic(url) {
   }
   return url;
 }
-
-// A loading image URL.
-var LOADING_IMAGE_URL = 'https://www.google.com/images/spin-32.gif?a';
 
 // Checks that the Firebase SDK has been correctly setup and configured.
 function checkSetup() {
@@ -462,7 +474,6 @@ var submitCheckInButton = document.getElementById('submit');
 var feeling = document.getElementById('feeling');
 var pleaseKnow = document.getElementById('need-to-know');
 var contentQuestion = document.getElementById('content-question');
-var teacherButton = document.getElementById('teacher');
 var modal = document.getElementById("confirmation");
 var modalClose = document.getElementsByClassName("close")[0];
 var teacherRoleButton = document.getElementById('role-teacher-button');
@@ -479,8 +490,6 @@ if (exitTicketFormElement) {
 }
 if (checkInFormElement) {
   checkInFormElement.addEventListener('submit', onCheckInSubmit);
-  // Triggers notification dialog for teachers
-  teacherButton.addEventListener('click', notificationsForTeachers);
   teacherRoleButton.addEventListener('click', userIsTeacher);
   studentRoleButton.addEventListener('click', userIsStudent);
 }
