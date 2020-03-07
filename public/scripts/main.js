@@ -22,11 +22,12 @@ async function signIn(googleUser) {
   return firebase.auth().signInWithPopup(provider).then(function(user) {
     // DEBUG: console.log(firebase.auth().currentUser);
     // DEBUG: console.log(role);
-    saveMessagingDeviceToken(role);
+    createOrUpdateUser(role);
   });
 }
 
 // Sign-in Promise
+// REMOVE?
 var signInPromise = new Promise(async function(resolve, error) {
   await resolve(signIn);
 });
@@ -63,6 +64,11 @@ function isUserSignedIn() {
   return !!firebase.auth().currentUser;
 }
 
+async function getUserRole() {
+  let user = await firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).get();
+  return user.data().role;
+}
+
 // Saves a new message on the Firebase DB.
 function saveExitTicket(entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
   // Add a new message entry into the database.
@@ -84,7 +90,7 @@ function saveExitTicket(entryTopic, entryMethod, entryLocation, entryRating, ent
 }
 
 // Saves a new check-in on the Firebase DB.
-function saveCheckIn(feeling, pleaseKnow, contentQuestion) {
+function saveCheckIn(feeling, pleaseKnow, contentQuestion, currentClass) {
   // Add a new message entry into the database.
   console.log('Attempting to add to check-in database')
   return firebase.firestore().collection('check-ins').add({
@@ -94,6 +100,7 @@ function saveCheckIn(feeling, pleaseKnow, contentQuestion) {
     feeling: feeling,
     pleaseKnow: pleaseKnow,
     question: contentQuestion,
+    classCode: currentClass,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   }).catch(function(error) {
     console.error('Error writing new check-in to database.', error);
@@ -114,11 +121,11 @@ async function userIsTeacher() {
 }
 
 
-// Saves the messaging device token to the datastore.
-async function saveMessagingDeviceToken(userRole) {
-  // TODO 10: Save the device token in the realtime datastore
+// Saves the user and device token to the datastore.
+async function createOrUpdateUser(userRole) {
   let user = firebase.auth().currentUser;
-  if (userRole == 'student' && !firebase.firestore().collection('users').doc(user.uid)) {
+  let remoteUser = await firebase.firestore().collection('users').doc(user.uid).get();
+  if (userRole == 'student' && !remoteUser.exists) {
     // Add student to the database without further action
     firebase.firestore().collection('users').doc(user.uid).set({
       name: getUserName(),
@@ -128,20 +135,20 @@ async function saveMessagingDeviceToken(userRole) {
       // token: currentToken,
       codes: []
     });
+    addClassModal("Welcome! Please enter the code your teacher gave you to join your first class: ", userRole)
   }
   // Update student information but keep any codes they've added
   else if (userRole == 'student') {
     let userData = firebase.firestore().collection('users').doc(user.uid).get();
-    firebase.firestore().collection('users').doc(user.uid).set({
+    firebase.firestore().collection('users').doc(user.uid).update({
       name: getUserName(),
       role: userRole,
-      email: user.email,
+      email: user.email
       // LATER: use for sending notifications to students
       // token: currentToken,
-      codes: userData.data().codes
     });
   }
-  else if (userRole == 'teacher' && !firebase.firestore().collection('users').doc(user.uid)) {
+  else if (userRole == 'teacher' && !remoteUser.exists) {
     firebase.messaging().getToken().then(function(currentToken) {
       if (currentToken) {
         console.log('Adding/updating user in database:', currentToken);
@@ -155,6 +162,7 @@ async function saveMessagingDeviceToken(userRole) {
           token: currentToken,
           codes: []
         });
+        addClassModal("Welcome! Since this is your first time signing in, please set up a class for your students to join.\nPick a simple code and name for your class. The code must be unique, but the class name does not.", userRole);
       } else {
         // Need to request permissions to show notifications.
         requestNotificationsPermissions();
@@ -171,12 +179,11 @@ async function saveMessagingDeviceToken(userRole) {
         // console.log(firebase.auth().currentUser);
         // Saving the Device Token to the datastore
         // TODO: Split tokens for categores (teachers/students? check-in/exit-ticket?)
-        firebase.firestore().collection('users').doc(user.uid).set({
+        firebase.firestore().collection('users').doc(user.uid).update({
           name: getUserName(),
           role: userRole,
           email: user.email,
-          token: currentToken,
-          codes: userData.data().codes
+          token: currentToken
         });
       } else {
         // Need to request permissions to show notifications.
@@ -194,28 +201,95 @@ function requestNotificationsPermissions() {
   console.log('Requesting notifications permission...');
   firebase.messaging().requestPermission().then(function() {
     // Notification permission granted.
-    saveMessagingDeviceToken();
+    createOrUpdateUser();
   }).catch(function(error) {
     console.log('Denied permission to give notifications.');
   });
 }
 
+
 // Add subscribed classes to list of choices
 async function displayClassLists(user) {
+  removeChildren(currentClass, 1);
   let userData = await firebase.firestore().collection('users').doc(user.uid).get();
   let classCodes = userData.data().codes;
   console.log(classCodes);
-  if (classCodes != []) {
+  if (classCodes.length > 0) {
+    console.log('writing codes to ui');
     var classListElement = document.getElementById('current-class');
     for (let code of classCodes) {
-      console.log(code);
+      let className = await firebase.firestore().collection('ccodes').doc(code).get();
       var newListItem = document.createElement('option');
       newListItem.id = code;
-      newListItem.innerHTML = code;
-      classListElement.appendChild(newListItem)
+      newListItem.value = code;
+      newListItem.innerHTML = className.data().name;
+      classListElement.appendChild(newListItem);
     }
     document.getElementById('class-list').removeAttribute('hidden');
   }
+  else {
+    addClassModal("It appears you don't have any classes yet. Please enter your class code below:", userData.data().role);
+  }
+}
+
+async function addClassModal(messageText, role=getUserRole()) {
+  modalMessage.innerHTML = messageText;
+  console.log("Changed modal inner html");
+  let classCodeEntry = document.createElement('input');
+  let classCodeConfirm = document.createElement('button');
+  let modalMessageContent = document.getElementById('modal-message-content'); 
+  classCodeEntry.type = 'text';
+  classCodeEntry.id = 'new-class-code';
+  classCodeEntry.placeholder = 'unique code';
+  classCodeConfirm.innerHTML = 'Submit';
+  classCodeConfirm.addEventListener('click', addClass);
+  modalMessageContent.appendChild(classCodeEntry);
+  if (await role == 'teacher') {
+    let classNameEntry = document.createElement('input');
+    classNameEntry.type = 'text';
+    classNameEntry.id = 'new-class-name';
+    classNameEntry.placeholder = 'class name';
+    modalMessageContent.appendChild(classNameEntry);
+  }
+  modalMessageContent.appendChild(classCodeConfirm);
+  modal.style = "display: block";
+}
+
+async function addClass() {
+  let userData = await firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).get();
+  let newClassCode = document.getElementById('new-class-code').value;
+  let dbCode = await firebase.firestore().collection('ccodes').doc(newClassCode);
+  let userRole = await getUserRole();
+  // If the user is a teacher, add the list of class codes
+  if (userRole == 'teacher') {
+    // Check to make sure the code doesn't already exist
+    if (dbCode.name == undefined) {
+      firebase.firestore().collection('ccodes').doc(newClassCode).set({
+        name: document.getElementById('new-class-name').value
+      })
+    }
+    // If it did, report that to the user and ask to try again.
+    else {
+      // TODO: report duplicate class code or generate them ourselves
+    }
+  }
+  // Whether the user is a student or teacher, now add the code to their user record
+  console.log(newClassCode);
+  let updatedClassCodes = userData.data().codes;
+  if (!updatedClassCodes.includes(newClassCode)) {
+    updatedClassCodes.push(newClassCode);
+    console.log(updatedClassCodes);
+    firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).update({
+      codes: updatedClassCodes
+    }).then(function() {
+      console.log('User class list updated successfully: ' + updatedClassCodes);
+    }).catch(function(error) {
+      console.log('Error updating class list: ' + error);
+    });
+  }
+  closeMessageModal();
+  displayClassLists(firebase.auth().currentUser);
+  // TODO: clear the modal and class code elements from the modal
 }
 
 // Clear exit ticket
@@ -262,6 +336,16 @@ function onMediaFileSelected(event) {
   }
 }
 
+// Toggle between showing and hiding the navigation menu links when the user clicks on the hamburger menu / bar icon
+function menuBar() {
+  var x = document.getElementById("menu-options");
+  if (x.style.display === "block") {
+    x.style.display = "none";
+  } else {
+    x.style.display = "block";
+  }
+}
+
 // Class Keeper: Triggered when the send new message form is submitted.
 function onExitTicketFormSubmit() {
   //e.preventDefault();
@@ -280,7 +364,7 @@ function onExitTicketFormSubmit() {
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
       clearExitTicket();
-      reportSubmission(rating);
+      notifyWithModal("Thank you for submitting your exit ticket!");
     });
   }
   return false;
@@ -290,19 +374,20 @@ function onExitTicketFormSubmit() {
 function onCheckInSubmit() {
   //e.preventDefault();
   var rating = checkInFormElement.elements["rating"].value;
-  console.log("Exit ticket being sent.");
+  console.log("Check-in being sent.");
   console.log(rating);
   console.log(pleaseKnow.value);
   console.log(contentQuestion.value);
+  console.log(currentClass.value)
   console.log(true == (rating && checkSignedInWithMessage()));
   // ^ Check that the user entered a message and is signed in.
-  if (rating && checkSignedInWithMessage()) {
-    saveCheckIn(rating, pleaseKnow.value, contentQuestion.value).then(function() {
+  if (currentClass.value && rating && checkSignedInWithMessage()) {
+    saveCheckIn(rating, pleaseKnow.value, contentQuestion.value, currentClass.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
       clearCheckInForm();
-      reportSubmission(rating);
+      notifyWithModal("Thank you for submitting your check-in, have a great day!");
     });
   }
   return false;
@@ -359,6 +444,7 @@ function authStateObserver(user) {
     //userNameElement.setAttribute('hidden', 'true');
     profileImage.setAttribute('hidden', 'true');
     signOutButtonElement.setAttribute('hidden', 'true');
+    classList.setAttribute('hidden', 'true');
 
     // Show role modal
     roleSignIn();
@@ -419,12 +505,10 @@ function getCheckedMethods() {
   return methods;
 }
 
-// Reports to the user that a check-in has been logged
-function reportSubmission() {
+// Simple dialog to report a message to the user
+function notifyWithModal(message) {
+  modalMessage.innerHTML = message;
   modal.style.display = "block";
-  modalClose.onclick = function() {
-    modal.style.display = "none";
-  }
   window.onclick = function(e) {
     if (e.target == modal) {
       modal.style.display = "none";
@@ -435,14 +519,29 @@ function reportSubmission() {
 // Reports to the user that a check-in has been logged
 function roleSignIn() {
   roleModal.style.display = "block";
-  roleModalClose.onclick = function() {
-    roleModal.style.display = "none";
-  }
   window.onclick = function(e) {
     if (e.target == modal) {
       roleModal.style.display = "none";
     }
   }
+}
+
+function closeMessageModal() {
+  modal.style.display =  "none";
+  removeChildren(document.getElementById('modal-message-content'), 2);
+}
+
+function removeChildren(parent, numRemaining) {
+  let content = parent;
+  let child = content.lastElementChild;
+  while (content.children.length > numRemaining) {
+    content.removeChild(child);
+    child = content.lastElementChild;
+  }
+}
+
+function closeRoleModal() {
+  roleModal.style.display = "none";
 }
 
 // Checks that Firebase has been imported.
@@ -474,15 +573,18 @@ var submitCheckInButton = document.getElementById('submit');
 var feeling = document.getElementById('feeling');
 var pleaseKnow = document.getElementById('need-to-know');
 var contentQuestion = document.getElementById('content-question');
-var modal = document.getElementById("confirmation");
-var modalClose = document.getElementsByClassName("close")[0];
 var teacherRoleButton = document.getElementById('role-teacher-button');
 var studentRoleButton = document.getElementById('role-student-button');
+var currentClass = document.getElementById('current-class');
+var classList = document.getElementById('class-list');
 
 
+var modal = document.getElementById("confirmation");
+var modalClose = document.getElementsByClassName("close")[0];
 var roleModal = document.getElementById('role-modal');
 var role = ''
 var roleModalClose = document.getElementsByClassName("close")[1];
+var modalMessage = document.getElementById("modal-message");
 
 // Saves exit ticket on submission
 if (exitTicketFormElement) {
@@ -493,6 +595,10 @@ if (checkInFormElement) {
   teacherRoleButton.addEventListener('click', userIsTeacher);
   studentRoleButton.addEventListener('click', userIsStudent);
 }
+
+// Add ability for modal 'x' to close modals
+modalClose.addEventListener('click', closeMessageModal);
+roleModalClose.addEventListener('click', closeRoleModal);
 
 // Saves message on form submit.
 signOutButtonElement.addEventListener('click', signOut);
