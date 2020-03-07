@@ -260,4 +260,47 @@ html, body {
         text-decoration: none;
         cursor: pointer;
       }
+
+      /* Style the navigation menu */
+      .topnav {
+        overflow: hidden;
+        background-color: #095484;
+        position: relative;
+      }
+
+      /* Hide the links inside the navigation menu (except for logo/home) */
+      .topnav #menu-options {
+        display: none;
+      }
+
+      /* Style navigation menu links */
+      .topnav a {
+        color: white;
+        padding: 14px 16px;
+        text-decoration: none;
+        font-size: 17px;
+        display: block;
+      }
+
+      /* Style the hamburger menu */
+      .topnav a.icon {
+        background: white;
+        display: block;
+        position: absolute;
+        right: 0;
+        top: 0;
+        color: #095484;
+      }
+
+      /* Add a grey background color on mouse-over */
+      .topnav a:hover {
+        background-color: white;
+        color: #095484;
+      }
+
+      /* Style the active link (or home/logo) */
+      .active {
+        background-color: #096084;
+        color: white;
+      }
 }

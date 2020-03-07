@@ -4,17 +4,35 @@
     <title>Check-In</title>
 
 	<link rel="stylesheet" href="css/style.css">
+  <!-- Load an icon library to show a hamburger menu (bars) on small screens -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <meta name="google-signin-client_id" content="894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com">
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">	
-	<script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
+    <script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
 
   </head>
+
+  <!-- Top Navigation Menu -->
+  <div class="topnav">
+    <a href="#" class="home">ClassKeeper</a>
+    <!-- Navigation links (hidden by default) -->
+    <div id="menu-options" style="display: none">
+      <a href="#" onclick="addClassModal('Please enter the code for your new class.')">Add Class</a>
+      <a href="#" onclick="signOut()">Log Out</a>
+      <!-- <a href="#about">About</a> -->
+    </div>
+    <!-- "Hamburger menu" / "Bar icon" to toggle the navigation links -->
+    <a href="javascript:void(0);" class="icon" onclick="menuBar()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+
   <body>
     <div class="sign-in-header" align="center">
-      <div class="sign-in-buttons" style="display: inline-block;">
-        <button id="sign-in" hidden>Student Sign up</button>
+      <div class="sign-in-buttons" style="display: inline-block">
+        <button id="sign-in" hidden>Sign in</button>
         <button id="sign-in-teacher" hidden>Teacher Sign Up</button>
       </div>
       <img class="profile-image" id="profile_img" src="#" hidden/>
@@ -30,7 +48,7 @@
             <h2>Please select the class you're in<span class="required">*</span></h2>
             <div class="question-answer">
                 <select id="current-class">
-                <option class="disabled" value="please-select" disabled selected></option>Please Select</option>
+                <option class="disabled" value="" disabled selected></option>Please Select</option>
                 </select>
             </div>
         </div>
@@ -130,11 +148,11 @@
       </form>
     </div>
 
-    <!-- Confirmation Modal -->
+    <!-- Message Modal -->
     <div id="confirmation" class="modal">
-      <div class="modal-content">
+      <div class="modal-content" id="modal-message-content">
         <span class="close">&times;</span>
-        <p>Thank you for submitting your check-in!</p>
+        <p id="modal-message">Thank you for submitting your check-in!</p>
       </div>
     </div>
 
