@@ -125,7 +125,16 @@ async function userIsTeacher() {
 async function createOrUpdateUser(userRole) {
   let user = firebase.auth().currentUser;
   let remoteUser = await firebase.firestore().collection('users').doc(user.uid).get();
-  if (userRole == 'student' && !remoteUser.exists) {
+  if (userRole == ''){
+    removeChildren(document.getElementById('welcome-dialog'), 1);
+    let assignRoleDialog = document.createElement('p');
+    assignRoleDialog.id = "assign-role-text";
+    assignRoleDialog.innerHTML = 'It appears you have not defined a role for yourself. Please choose one below:';
+    document.getElementById('welcome-dialog').appendChild(assignRoleDialog);
+    signOut();
+    roleSignIn();
+  }
+  else if (userRole == 'student' && !remoteUser.exists) {
     // Add student to the database without further action
     firebase.firestore().collection('users').doc(user.uid).set({
       name: getUserName(),
@@ -162,7 +171,7 @@ async function createOrUpdateUser(userRole) {
           token: currentToken,
           codes: []
         });
-        addClassModal("Welcome! Since this is your first time signing in, please set up a class for your students to join.\nPick a simple code and name for your class. The code must be unique, but the class name does not.", userRole);
+        addClassModal("Welcome! Since this is your first time signing in, please set up a class for your students to join.\nPick a simple code and name for your class. The code must be unique, but the class name does not.\nWrite your code down so you don't lose it, it's the only way for students to join your class!", userRole);
       } else {
         // Need to request permissions to show notifications.
         requestNotificationsPermissions();
