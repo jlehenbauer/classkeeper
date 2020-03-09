@@ -21,42 +21,48 @@ exports.sendNotifications = functions.firestore.document('check-ins/{messageId}'
     // Notification details.
     const question = snapshot.data().question;
     const know = snapshot.data().pleaseKnow;
-    // const classCode  = snapshot.data().code;
+    const classCode  = snapshot.data().classCode;
+    const className = await admin.firestore().collection('ccodes').doc(classCode).get();
     const payload = {
       notification: {
-        title: `${snapshot.data().name} checked in at a ${snapshot.data().feeling}`,
-        body: (know ? ('You should know: ' + know) : '') + (question ? ('Asked: ' + question) : ''),
+        title: `${snapshot.data().name} checked into ${className.data().name} at a ${snapshot.data().feeling}`,
+        body: (know ? ('You should know: ' + know) : '') + '\n' + (question ? ('Asked: ' + question) : ''),
         icon: snapshot.data().profile_img || '/images/profile_placeholder.png',
-        click_action: `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com`,
+        click_action: `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com`
       }
     };
     // DEBUG: console.log('Successfully created notification payload');
 
     // Get the list of device tokens.
     /**
-    const allTokens = await admin.firestore().collection('fcmTokens').get();
+    const allUsers = await admin.firestore().collection('fcmTokens').get();
     const tokens = [];
-    allTokens.forEach((tokenDoc) => {
+    allUsers.forEach((tokenDoc) => {
       // DEBUG: console.log(tokenDoc.data().role);
       if (tokenDoc.data().role == 'teacher') {
         tokens.push(tokenDoc.id);
       }
     });
     **/
-    const allTokens = await admin.firestore().collection('users').get();
-    const tokens = [];
-    allTokens.forEach((tokenDoc) => {
+    const allUsers = await admin.firestore().collection('users').get();
+    const users = [];
+    allUsers.forEach((user) => {
       // DEBUG: console.log(tokenDoc.data().role);
-      if (tokenDoc.data().role == 'teacher') {
-        tokens.push(tokenDoc.data().token);
+      if (user.data().role == 'teacher') {
+        if (user.data().codes.includes(classCode)) {
+          users.push(user.data().token);
+        }
       }
     });
 
-    if (tokens.length > 0) {
+    if (users.length > 0) {
       // Send notifications to all tokens.
-      const response = await admin.messaging().sendToDevice(tokens, payload);
-      await cleanupTokens(response, tokens);
+      const response = await admin.messaging().sendToDevice(users, payload);
+      console.log(response);
+      // Cleanup no longer needed, tokens update within user's attribute
+      //await cleanupTokens(response, users);
       console.log('Notifications have been sent and tokens cleaned up.');
+      console.log('Notifications were sent to :' + users);
     }
   });
 

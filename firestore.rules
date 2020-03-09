@@ -32,6 +32,10 @@ service cloud.firestore {
       //              && request.resource.data.name == request.auth.token.name;
       allow delete: if false;
     }
+    match /ccodes/{classCode} {
+      allow read, create, update;
+      allow delete: if false;
+    }
     // FCM Tokens:
     //   - Anyone can write their token.
     //   - Reading list of tokens is not allowed.
