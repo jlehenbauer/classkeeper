@@ -19,9 +19,12 @@
 async function signIn(googleUser) {
   // Sign in Firebase using popup auth and Google as the identity provider.
   var provider = new firebase.auth.GoogleAuthProvider();
-  return firebase.auth().signInWithPopup(provider).then(function(user) {
+  return firebase.auth().signInWithPopup(provider).then(async function(user) {
     // DEBUG: console.log(firebase.auth().currentUser);
     // DEBUG: console.log(role);
+  if (role == '') {
+    role = await getUserRole();
+  }
     createOrUpdateUser(role);
   });
 }
@@ -125,7 +128,7 @@ async function userIsTeacher() {
 async function createOrUpdateUser(userRole) {
   let user = firebase.auth().currentUser;
   let remoteUser = await firebase.firestore().collection('users').doc(user.uid).get();
-  if (userRole == ''){
+  if (userRole !== 'teacher' && userRole !== 'student'){
     removeChildren(document.getElementById('welcome-dialog'), 1);
     let assignRoleDialog = document.createElement('p');
     assignRoleDialog.id = "assign-role-text";
@@ -267,12 +270,12 @@ async function addClassModal(messageText, role=getUserRole()) {
 async function addClass() {
   let userData = await firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).get();
   let newClassCode = document.getElementById('new-class-code').value;
-  let dbCode = await firebase.firestore().collection('ccodes').doc(newClassCode);
+  let dbCode = await firebase.firestore().collection('ccodes').doc(newClassCode).get();
   let userRole = await getUserRole();
   // If the user is a teacher, add the list of class codes
   if (userRole == 'teacher') {
     // Check to make sure the code doesn't already exist
-    if (dbCode.name == undefined) {
+    if (dbCode.data().name == undefined) {
       firebase.firestore().collection('ccodes').doc(newClassCode).set({
         name: document.getElementById('new-class-name').value
       })
@@ -280,6 +283,9 @@ async function addClass() {
     // If it did, report that to the user and ask to try again.
     else {
       // TODO: report duplicate class code or generate them ourselves
+      closeMessageModal();
+      addClassModal("Sorry, that code has been used already. Please enter another code: ", 'teacher');
+      return false;
     }
   }
   // Whether the user is a student or teacher, now add the code to their user record
@@ -298,6 +304,7 @@ async function addClass() {
   }
   closeMessageModal();
   displayClassLists(firebase.auth().currentUser);
+  return true;
   // TODO: clear the modal and class code elements from the modal
 }
 
