@@ -1,6 +1,6 @@
-# Firebase Codelab: FriendlyChat -> ClassKeeper
+# ClassKeeper
 
-This is the source code for the Firebase FriendlyChat codelab adapted to the ClassKeeper web app. 
+This is the source code for the ClassKeeper web app. 
 
 ## License
 See [LICENSE](LICENSE)
