@@ -25,7 +25,7 @@ async function signIn(googleUser) {
   if (role == '') {
     role = await getUserRole();
   }
-    createOrUpdateUser(role);
+  createOrUpdateUser(role);
   });
 }
 
@@ -65,6 +65,10 @@ function getEmail() {
 // Returns true if a user is signed-in.
 function isUserSignedIn() {
   return !!firebase.auth().currentUser;
+}
+
+function getUserToken() {
+  return firebase.auth().currentUser.getIdToken();
 }
 
 async function getUserRole() {
@@ -223,12 +227,13 @@ function requestNotificationsPermissions() {
 // Add subscribed classes to list of choices
 async function displayClassLists(user) {
   removeChildren(currentClass, 1);
+  
   let userData = await firebase.firestore().collection('users').doc(user.uid).get();
   let classCodes = userData.data().codes;
   console.log(classCodes);
   if (classCodes.length > 0) {
     console.log('writing codes to ui');
-    var classListElement = document.getElementById('current-class');
+    var classListElement = currentClass;
     for (let code of classCodes) {
       let className = await firebase.firestore().collection('ccodes').doc(code).get();
       var newListItem = document.createElement('option');
@@ -237,7 +242,7 @@ async function displayClassLists(user) {
       newListItem.innerHTML = className.data().name;
       classListElement.appendChild(newListItem);
     }
-    document.getElementById('class-list').removeAttribute('hidden');
+    classList.removeAttribute('hidden');
   }
   else {
     addClassModal("It appears you don't have any classes yet. Please enter your class code below:", userData.data().role);
@@ -268,6 +273,7 @@ async function addClassModal(messageText, role=getUserRole()) {
 }
 
 async function addClass() {
+  let user = await firebase.auth().currentUser;
   let userData = await firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).get();
   let newClassCode = document.getElementById('new-class-code').value;
   let dbCode = await firebase.firestore().collection('ccodes').doc(newClassCode).get();
@@ -275,7 +281,7 @@ async function addClass() {
   // If the user is a teacher, add the list of class codes
   if (userRole == 'teacher') {
     // Check to make sure the code doesn't already exist
-    if (dbCode.data().name == undefined) {
+    if (dbCode.data() == undefined) {
       firebase.firestore().collection('ccodes').doc(newClassCode).set({
         name: document.getElementById('new-class-name').value
       })
@@ -303,18 +309,20 @@ async function addClass() {
     });
   }
   closeMessageModal();
-  displayClassLists(firebase.auth().currentUser);
+
+  displayClassLists(user, 'check-in-current-class');
+  location.reload(true);
   return true;
   // TODO: clear the modal and class code elements from the modal
 }
 
 // Clear exit ticket
 function clearExitTicket(){
-  var rating = parseInt(exitTicketFormElement.elements["rating"].value);
+  var rating = parseInt(exitTicketFormElement.elements["exit_rating"].value);
   for (const item of Array(exitMethods.length).keys()) {
     exitMethods[item].checked = false;
   }
-  exitTicketFormElement.elements["rating"][rating - 1].checked = false;
+  exitTicketFormElement.elements["exit_rating"][rating - 1].checked = false;
   exitTopic.value = '';
   exitLocation = '';
   exitQuestion = '';
@@ -352,20 +360,10 @@ function onMediaFileSelected(event) {
   }
 }
 
-// Toggle between showing and hiding the navigation menu links when the user clicks on the hamburger menu / bar icon
-function menuBar() {
-  var x = document.getElementById("menu-options");
-  if (x.style.display === "block") {
-    x.style.display = "none";
-  } else {
-    x.style.display = "block";
-  }
-}
-
 // Class Keeper: Triggered when the send new message form is submitted.
 function onExitTicketFormSubmit() {
   //e.preventDefault();
-  var rating = exitTicketFormElement.elements["rating"].value;
+  let rating = exitTicketFormElement.elements["exit_rating"].value;
   console.log("Check-in being sent.");
   console.log(exitTopic.value);
   console.log(getCheckedMethods());
@@ -423,31 +421,34 @@ function onMessageFormSubmit(e) {
 }
 
 // Triggers when the auth state change for instance when the user signs-in or signs-out.
-function authStateObserver(user) {
+async function authStateObserver(user) {
   if (user != null) { // User is signed in!
     // Get the signed-in user's profile pic and name.
     var profilePicUrl = getProfilePicUrl();
     var userName = getUserName();
     var userEmail = getEmail();
+    var token = getUserToken();
+    let role = getUserRole();
 
     console.log("User is logged in");
 
     // Set the user's profile pic and name.
-
-    //console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
     console.log('Name: ' + userName);
     console.log('Image URL: ' + profilePicUrl);
     console.log('Email: ' + userEmail); // This is null if the 'email' scope is not present.
     console.log("loaded googleUser");
     document.getElementById("profile_img").src = profilePicUrl;
-    document.getElementById("first-name").value = userName.replace(/ .*/,'');
-    //userPicElement.style.backgroundImage = 'url(' + addSizeToGoogleProfilePic(profilePicUrl) + ')';
-    //userNameElement.textContent = userName;
+    exitUserFirstName.value = userName.replace(/ .*/,'');
+    userFirstName.value = userName.replace(/ .*/,'');
 
     displayClassLists(firebase.auth().currentUser);
 
+    // If user is a teacher, show additional menu options
+    if (await role == 'teacher') {
+      dataViewButton.style.display = "";
+    }
+
     // Show user's profile and sign-out button.
-    //userNameElement.removeAttribute('hidden');
     profileImage.removeAttribute('hidden');
     signOutButtonElement.removeAttribute('hidden');
     roleModal.style.display = "none";
@@ -532,6 +533,11 @@ function notifyWithModal(message) {
   }
 }
 
+function closeMessageModal() {
+  modal.style.display =  "none";
+  removeChildren(document.getElementById('modal-message-content'), 2);
+}
+
 // Reports to the user that a check-in has been logged
 function roleSignIn() {
   roleModal.style.display = "block";
@@ -542,9 +548,8 @@ function roleSignIn() {
   }
 }
 
-function closeMessageModal() {
-  modal.style.display =  "none";
-  removeChildren(document.getElementById('modal-message-content'), 2);
+function closeRoleModal() {
+  roleModal.style.display = "none";
 }
 
 function removeChildren(parent, numRemaining) {
@@ -556,32 +561,99 @@ function removeChildren(parent, numRemaining) {
   }
 }
 
-function closeRoleModal() {
-  roleModal.style.display = "none";
+async function showClassLists() {
+  // Current names and codes are contained within the dropdown options
+  let htmlClassList = document.getElementById('current-class').children;
+  let classListTable = document.getElementById('class-name-code-table');
+  for (let classItem of Array.from(htmlClassList).slice(1, htmlClassList.length)) {
+    let newRow = classListTable.insertRow();
+    newRow.align = "center";
+    let cell = newRow.insertCell();
+    cell.appendChild(document.createTextNode(classItem.innerHTML));
+    cell = newRow.insertCell();
+    cell.appendChild(document.createTextNode(classItem.id));
+    console.log(classItem.id);
+    console.log(classItem.innerHTML);
+  }
+  return false;
+}
+
+function buttonData() {
+  changeToDataView();
+  menuBar();
+}
+
+function buttonCheckIn() {
+  changeToCheckInView();
+  menuBar();
+}
+
+function buttonExitTicket() {
+  changeToExitTicketView();
+  menuBar();
+}
+
+async function changeToDataView() {
+  if (document.getElementById('class-name-code-table').children[0].children.length == 1) {
+    showClassLists();
+  }
+  exitTicketFormElement.setAttribute('hidden', true);
+  checkInFormElement.setAttribute('hidden', true);
+  dataContentView.removeAttribute('hidden');
+}
+
+async function changeToCheckInView() {
+  exitTicketFormElement.setAttribute('hidden', true);
+  dataContentView.setAttribute('hidden', true);
+  checkInFormElement.removeAttribute('hidden');
+}
+
+async function changeToExitTicketView() {
+  dataContentView.setAttribute('hidden', true);
+  checkInFormElement.setAttribute('hidden', true);
+  exitTicketFormElement.removeAttribute('hidden');
+}
+
+// Toggle between showing and hiding the navigation menu links when the user clicks on the hamburger menu / bar icon
+function menuBar() {
+  var menu_display = document.getElementById("menu-options");
+  var display_header = document.getElementsByClassName("sign-in-header")[0];
+  if (menu_display.style.display === "block") {
+    menu_display.style.display = "none";
+    display_header.style= "padding-top: 50px";
+  } else {
+    menu_display.style.display = "block";
+    display_header.style= "padding-top: 300px";
+    console.log(menu_display.style.height);
+  }
 }
 
 // Checks that Firebase has been imported.
 checkSetup();
 
-// Shortcuts to DOM Elements for chat service.
+// Parent Page Elements
+var pageContent = document.getElementById('page-content');
+var dataContentView = document.getElementById('data-content');
+var classList = document.getElementById('class-list');
+var currentClass = document.getElementById('current-class');
+
+// Shortcuts to DOM Elements for user management.
 var userNameElement = document.getElementById('user-name');
 var signInButtonElement = document.getElementById('sign-in');
 var signOutButtonElement = document.getElementById('sign-out');
-
-// Shortcuts to DOB Elements for Class Keeper
-// User Elements
 var profileImage = document.getElementById('profile_img');
 var userEmail = '';
-var userFirstName = document.getElementById('first-name');
 
 // Exit Ticket Form Elements
 var exitTicketFormElement = document.getElementById('exit-ticket-form');
 var exitTopic = document.getElementById('topic');
 var exitMethods = document.getElementsByName('checklist');
 var exitLocation = document.getElementById('location');
-var exitRating = document.getElementById('rating_radio');
+var exitRating = document.getElementById('exit_rating_radio');
 var exitQuestion = document.getElementById('student-question');
 var submitButtonElement = document.getElementById('submit-exit-ticket');
+var exitUserFirstName = document.getElementById('exit-first-name');
+var exitTicketCurrentClass = null;
 
 // Check-in Form Elements
 var checkInFormElement = document.getElementById('check-in');
@@ -591,16 +663,29 @@ var pleaseKnow = document.getElementById('need-to-know');
 var contentQuestion = document.getElementById('content-question');
 var teacherRoleButton = document.getElementById('role-teacher-button');
 var studentRoleButton = document.getElementById('role-student-button');
-var currentClass = document.getElementById('current-class');
-var classList = document.getElementById('class-list');
+var userFirstName = document.getElementById('check-in-first-name');
 
+// Data view Elements
 
+// Modal Elements
 var modal = document.getElementById("confirmation");
 var modalClose = document.getElementsByClassName("close")[0];
 var roleModal = document.getElementById('role-modal');
 var role = ''
 var roleModalClose = document.getElementsByClassName("close")[1];
 var modalMessage = document.getElementById("modal-message");
+
+// Menu bar elements
+var homeButton = document.getElementById("menu-button-home");
+var dataViewButton = document.getElementById("menu-button-data");
+var checkInViewButton = document.getElementById("menu-button-check-in");
+var addClassButton = document.getElementById("menu-button-add-class");
+var exitTicketViewButton = document.getElementById("menu-button-exit-ticket");
+homeButton.addEventListener('click', menuBar);
+dataViewButton.addEventListener('click', buttonData);
+checkInViewButton.addEventListener('click', buttonCheckIn);
+addClassButton.addEventListener('click', function() {addClassModal('Please enter the code for your new class.')})
+exitTicketViewButton.addEventListener('click', buttonExitTicket);
 
 // Saves exit ticket on submission
 if (exitTicketFormElement) {

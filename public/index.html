@@ -1,157 +1,361 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Check-In</title>
+    <title>ClassKeeper</title>
 
-  <link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/style.css">
+  <!-- Load an icon library to show a hamburger menu (bars) on small screens -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <meta name="google-signin-client_id" content="894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com">
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">  
-  <script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
-  <script>
-  window.onLoadCallback = function(){
-    gapi.auth2.init({
-        client_id: '894443099779-1vcg0g99jntsdq3rmni2u31l5bbd2ito.apps.googleusercontent.com'
-      });
-  }
-  </script>
-
-  <script>
-    function onSignIn(googleUser) {
-      var profile = googleUser.getBasicProfile();
-      console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-      console.log('Name: ' + profile.getName());
-      console.log('Image URL: ' + profile.getImageUrl());
-      console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-      console.log("loaded googleUser");
-      document.getElementById("profile_img").src = profile.getImageUrl();
-      document.getElementById("profile_img").style.display = "";
-      document.getElementById("button-signout").style.display = "";
-      document.getElementById("button-signin").style.display = "none";
-    }
-  </script>
-  <script>
-    function signOut() {
-      var auth2 = gapi.auth2.getAuthInstance();
-      document.getElementById("profile_img").style.display = "none";
-      document.getElementById("profile_img").src = "#";
-      document.getElementById("button-signout").style.display = "none";
-      document.getElementById("button-signin").style.display = "";
-      auth2.signOut().then(function () {
-        console.log('User signed out.');
-      });
-    }
-  </script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">	
+    <script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
 
   </head>
+
+  <!-- Top Navigation Menu -->
+  <div class="topnav">
+    <a href="#" class="home" id="menu-button-home">ClassKeeper</a>
+    <!-- Navigation links (hidden by default) -->
+    <div id="menu-options" style="display: none">
+    	<a href="#" id="menu-button-check-in">Check-In</a>
+    	<a href="#" id="menu-button-exit-ticket" style="display: none">Exit Ticket</a>
+    	<a href="#" id="menu-button-data" style="display: none">Class Information</a>
+    	<a href="#" id="menu-button-add-class">Add Class</a>
+    	<a href="#" onclick="signOut()">Log Out</a>
+    	<!-- <a href="#about">About</a> -->
+    </div>
+    <!-- "Hamburger menu" / "Bar icon" to toggle the navigation links -->
+    <a href="javascript:void(0);" class="icon" onclick="menuBar()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+
   <body>
     <div class="sign-in-header" align="center">
-      <button id="sign-in" hidden></button>
-      <img class="profile-image" id="profile_img" src="#" hidden/>
-      <br>
-      <button id="sign-out" href="#" hidden>Sign out</button>
-    </div>
-    <div class="testbox">
-
-      <form action="#" id="check-in">
-        <h1>Check-in</h1>
-        <p>Welcome to class!</p>
-        <h2>What is your first name?</h2>
-        <div class="name">
-          <input id="first-name" type="text" name="name" placeholder="First" />
-          <!-- <input type="text" name="name" placeholder="Last" /> -->
+        <div class="sign-in-buttons" style="display: inline-block">
+        	<button id="sign-in" hidden>Sign in</button>
+        	<button id="sign-in-teacher" hidden>Teacher Sign Up</button>
         </div>
-        <div class="question">
-          <h2>How are you feeling right now?<span class="required"></span></h2>
-          <div class="question-answer" id="feeling">
-              <table align="center">
-                  <tr>
-                      <th class="first-col"></th>
-                      <th style="text-align: center;">1</th>
-                      <th style="text-align: center;">2</th>
-                      <th style="text-align: center;">3</th>
-                      <th style="text-align: center;">4</th>
-                      <th style="text-align: center;">5</th>
-                      <th style="text-align: center;">6</th>
-                      <th style="text-align: center;">7</th>
-                      <th style="text-align: center;">8</th>
-                      <th style="text-align: center;">9</th>
-                      <th style="text-align: center;">10</th>
-                      <th class="last-col"></th>
-                  </tr>
-                  <tr>
-                    <td class="first-col">
-                        <label><span>Bad</span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="1" id="rating_radio_1" name="rating" required/>
-                        <label for="rating_radio_1" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="2" id="rating_radio_2" name="rating" required/>
-                        <label for="rating_radio_2" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="3" id="rating_radio_3" name="rating" required/>
-                        <label for="rating_radio_3" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="4" id="rating_radio_4" name="rating" required/>
-                        <label for="rating_radio_4" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="5" id="rating_radio_5" name="rating" required/>
-                        <label for="rating_radio_5" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="6" id="rating_radio_6" name="rating" required/>
-                        <label for="rating_radio_6" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="7" id="rating_radio_7" name="rating" required/>
-                        <label for="rating_radio_7" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="8" id="rating_radio_8" name="rating" required/>
-                        <label for="rating_radio_8" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="9" id="rating_radio_9" name="rating" required/>
-                        <label for="rating_radio_9" class="radio"><span></span></label>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="radio" value="10" id="rating_radio_10" name="rating" required/>
-                        <label for="rating_radio_10" class="radio"><span></span></label>
-                    </td>
-                    <td class="last-col">
-                        <label><span>Great!</span></label>
-                    </td>
+        <img class="profile-image" id="profile_img" src="#" hidden/>
+        <br>
+        <button id="sign-out" href="#" hidden>Sign out</button>
+    </div>
 
-                  </tr>
-              </table>
+    <div class="testbox" id="page-content" style="display: block">
+        <div class="question" id="class-list" name="class-list" align="center" style="padding-bottom: 20px" hidden>
+            <h2>Please select your class:<span class="required">*</span></h2>
+            <div class="question-answer">
+                <select id="current-class">
+                <option class="disabled" value="" disabled selected></option>Please Select</option>
+                </select>
+            </div>
+        </div>
+
+    	<div id="data-content" hidden>
+    		<table align="center" id="class-name-code-table">
+    			<tr>
+    				<th>Class name</th>
+    				<th>Class code</th>
+    			</tr>
+       		</table>
+    	</div>	
+
+	    <!-- Check-in Form View-->
+	    <div>
+		    <form action="#" id="check-in" onsubmit="return false">
+		        <h1>Check-in</h1>
+		        <p>Welcome to class!</p>
+		        <h2>What is your first name?</h2>
+		        <div class="name">
+					<input id="check-in-first-name" type="text" name="name" placeholder="First" />
+					<!-- <input type="text" name="name" placeholder="Last" /> -->
+		        </div>
+		        <div class="question">
+		            <h2>How are you feeling right now?<span class="required"></span></h2>
+		            <div class="question-answer" id="feeling">
+		                <table align="center">
+		                    <tr>
+		                        <th class="first-col"></th>
+		                        <th style="text-align: center;">1</th>
+		                        <th style="text-align: center;">2</th>
+		                        <th style="text-align: center;">3</th>
+		                        <th style="text-align: center;">4</th>
+		                        <th style="text-align: center;">5</th>
+		                        <th style="text-align: center;">6</th>
+		                        <th style="text-align: center;">7</th>
+		                        <th style="text-align: center;">8</th>
+		                        <th style="text-align: center;">9</th>
+		                        <th style="text-align: center;">10</th>
+		                        <th class="last-col"></th>
+		                    </tr>
+		                    <tr>
+			                    <td class="first-col">
+			                        <label><span>Bad</span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="1" id="rating_radio_1" name="rating" required/>
+			                        <label for="rating_radio_1" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="2" id="rating_radio_2" name="rating" required/>
+			                        <label for="rating_radio_2" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="3" id="rating_radio_3" name="rating" required/>
+			                        <label for="rating_radio_3" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="4" id="rating_radio_4" name="rating" required/>
+			                        <label for="rating_radio_4" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="5" id="rating_radio_5" name="rating" required/>
+			                        <label for="rating_radio_5" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="6" id="rating_radio_6" name="rating" required/>
+			                        <label for="rating_radio_6" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="7" id="rating_radio_7" name="rating" required/>
+			                        <label for="rating_radio_7" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="8" id="rating_radio_8" name="rating" required/>
+			                        <label for="rating_radio_8" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="9" id="rating_radio_9" name="rating" required/>
+			                        <label for="rating_radio_9" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: center;">
+			                        <input type="radio" value="10" id="rating_radio_10" name="rating" required/>
+			                        <label for="rating_radio_10" class="radio"><span></span></label>
+			                    </td>
+			                    <td class="last-col">
+			                        <label><span>Great!</span></label>
+			                    </td>
+		                    </tr>
+		                </table>
+		            </div>
+		        </div>
+		        <br>
+		        <div class="question">
+		            <h2>Is there anything you want Mr. Lehenbauer to know?</h2>
+		            <div class="question-answer">
+		                <input type="text" name="need-to-know" id="need-to-know"/>
+		            </div>
+		        </div>
+		        <br>
+		        <div class="question">
+		            <h2>Do you have any questions about yesterday's work or about what we'll be doing today?</h2>
+		            <div class="question-answer">
+		                <input type="text" name="content-question" id="content-question"/>
+		            </div>
+		        </div>
+		        <br>
+		        <div class="btn-block">
+		            <button id="submit">Submit</button>
+		        </div>
+		    </form>
+		</div>
+
+		    <!-- Exit Ticket Form -->
+		    <div>
+		    <form id="exit-ticket-form" onsubmit="return false" hidden>
+		        <h1>Class Exit Ticket</h1>
+		        <p>You did an AWESOME job in class today. Let me know what you did, how you felt, and how we can do better tomorrow!</p>
+		        <h2>What is your first name?</h2>
+		        <div class="name">
+		          <input id="exit-first-name" type="text" name="name" placeholder="First" value=""/>
+		        </div>
+		        <div class="question" id="topic-question">
+		            <h2>What did you learn about today?<span class="required">*</span></h2>
+		            <div class="question-answer">
+		                <input type="text" name="topic" id="topic"/>
+		            </div>
+		        </div>
+		        <div class="question">
+		            <h2>What did you use? (select all that apply)<span class="required">*</span></h2>
+		            <small>Please include the following in your application.</small>
+		            <div class="question-answer" id="check">
+		                <div>
+		                	<input type="checkbox" value="Google Classroom" id="check_1" name="checklist"/>
+		                	<label for="check_1" class="check"><span>Google Classroom</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="OneNote" id="check_2" name="checklist"/>
+		                	<label for="check_2" class="check"><span>OneNote</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="Paper Notebook" id="check_3" name="checklist"/>
+		                	<label for="check_3" class="check"><span>Paper Notebook</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="Worksheet" id="check_4" name="checklist"/>
+		                	<label for="check_4" class="check"><span>Worksheet</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="Written Notes" id="check_5" name="checklist"/>
+		                	<label for="check_5" class="check"><span>Written Notes</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="Class Activity" id="check_6" name="checklist"/>
+		                	<label for="check_6" class="check"><span>Class Activity</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="Calculator" id="check_7" name="checklist"/>
+		                	<label for="check_7" class="check"><span>Calculator</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="Workbook" id="check_8" name="checklist"/>
+		                	<label for="check_8" class="check"><span>Workbook</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="Whiteboard" id="check_9" name="checklist"/>
+		                	<label for="check_9" class="check"><span>Whiteboard</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="Class Discussion" id="check_10" name="checklist"/>
+		                	<label for="check_10" class="check"><span>Class Discussion</span></label>
+		                </div>
+		                <div>
+		                	<input type="checkbox" value="PantherPortal" id="check_11" name="checklist"/>
+		                	<label for="check_11" class="check"><span>PantherPortal</span></label>
+		            <!--
+		              <div style="display:inline-block">
+		                <input type="checkbox" value="Other:" id="check_other" name="checklist"/>
+		                <input type="text" name="check_other"/>
+		              </div>
+		            -->
+		            	</div>
+		        	</div>
+		        </div>
+		        <div class="question">
+		            <h2>Where did you learn it?<span class="required">*</span></h2>
+		            <div class="question-answer">
+		                <select id="location">
+		                <option class="disabled" value="location" disabled selected></option>Please Select</option>
+		                <option value="inside">Inside</option>
+		                <option value="outside">Outside</option>
+		                <option value="other">Other</option>
+		                </select>
+		            </div>
+		        </div>
+
+		        <div class="question">
+		            <h2>How well did you learn the topic today?<span class="required">*</span></h2>
+		            <div class="question-answer" id="exit_rating_radio">
+		                <table class="ratings" align="center" width="100%">
+		                    <tr>
+		                        <th class="first-col"></th>
+		                        <th style="text-align: center;">1</th>
+		                        <th style="text-align: center;">2</th>
+		                        <th style="text-align: center;">3</th>
+		                        <th style="text-align: center;">4</th>
+		                        <th style="text-align: center;">5</th>
+		                        <th style="text-align: center;">6</th>
+		                        <th style="text-align: center;">7</th>
+		                        <th style="text-align: center;">8</th>
+		                        <th style="text-align: center;">9</th>
+		                        <th style="text-align: center;">10</th>
+		                       <th class="last-col"></th>
+		                    </tr>
+		                    <tr>
+			                    <td class="first-col">
+			                        <label align="center">I still need help</label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="1" id="exit_rating_radio_1" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_1" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="2" id="exit_rating_radio_2" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_2" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="3" id="exit_rating_radio_3" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_3" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="4" id="exit_rating_radio_4" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_4" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="5" id="exit_rating_radio_5" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_5" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="6" id="exit_rating_radio_6" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_6" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="7" id="exit_rating_radio_7" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_7" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="8" id="exit_rating_radio_8" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_8" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="9" id="exit_rating_radio_9" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_9" class="radio"><span></span></label>
+			                    </td>
+			                    <td style="text-align: right;">
+			                        <input type="radio" value="10" id="exit_rating_radio_10" name="exit_rating" required/>
+			                        <label for="exit_rating_radio_10" class="radio"><span></span></label>
+			                    </td>
+			                    <td class="last-col">
+			                        <label>I could teach someone else</label>
+			                    </td>
+		                    </tr>
+		              </table>
+		          </div>
+		        </div>
+		        <br>
+		        <div class="question">
+		            <h2>If you still have a question about what we did, type it below.</h2>
+		            <div class="question-answer">
+		                <textarea rows="3" id="student-question" value=""></textarea>
+		            </div>
+		        </div>
+		        <br>
+		        <br>
+		        <div class="btn-block">
+		            <button id="submit-exit-ticket">Submit</button>
+		        </div>
+		    </form>
+		</div>
+
+    </div>
+
+    <!-- Message Modal -->
+    <div id="confirmation" class="modal">
+      <div class="modal-content" id="modal-message-content">
+        <span class="close">&times;</span>
+        <p id="modal-message">Thank you for submitting your check-in!</p>
+      </div>
+    </div>
+
+    <!-- Role Modal -->
+    <div id="role-modal" class="modal" hidden>
+      <div class="modal-content" style="align-items: center">
+        <span class="close">&times;</span>
+        <div id="welcome-dialog">
+          <h2 id="hello-name">Hello!</h2>
+          <h3>It looks like this is your first time logging in. Please select your role:</h3>
+          <p>If you have logged in before, feel free to close this and use the sign-in button.</p>
+        </div>
+        <div style='align-content: center'>
+          <div style="align-content: center">
+            <button id="role-teacher-button" style="margin: 1.5em">Teacher</button>
+            <button id="role-student-button" style="margin: 1.5em">Student</button>
           </div>
-        </div>
-        <br>
-        <div class="question">
-            <h2>Is there anything you want Mr. Lehenbauer to know?</h2>
-            <div class="question-answer">
-                <input type="text" name="need-to-know" id="need-to-know"/>
-            </div>
-        </div>
-        <br>
-        <div class="question">
-            <h2>Do you have any questions about yesterday's work or about what we'll be doing today?</h2>
-            <div class="question-answer">
-                <input type="text" name="content-question" id="content-question"/>
-            </div>
-        </div>
-        <br>
-        <div class="btn-block">
-            <button id="submit" type="submit">Submit</button>
-        </div>
-      </form>
+      </div>
     </div>
+
   </body>
 
 <!-- Import and configure the Firebase SDK -->
