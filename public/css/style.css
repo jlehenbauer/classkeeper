@@ -155,6 +155,23 @@ html, body {
                   padding: 0px;
             }
       }
+
+      table#class-name-code-table{
+        display: inline-block; 
+        float: left; 
+        margin-right: 60px;
+        border: 2px solid;
+        border-radius: 10px;
+        border-collapse: separate;
+        border-spacing: 5px;
+      }
+      table#recent-check-in-response-table{
+        display: inline-block; 
+        border: 2px solid;
+        border-radius: 10px;
+        border-collapse: separate;
+        border-spacing: 10px;
+      }
       /** Uncomment these sections when moving back to stylized checkboxes **/
       input[type=checkbox]:checked + .check:before {
       background: #095484;

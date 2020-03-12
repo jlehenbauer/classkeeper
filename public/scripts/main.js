@@ -561,7 +561,7 @@ function removeChildren(parent, numRemaining) {
   }
 }
 
-async function showClassLists() {
+function showClassLists() {
   // Current names and codes are contained within the dropdown options
   let htmlClassList = document.getElementById('current-class').children;
   let classListTable = document.getElementById('class-name-code-table');
@@ -572,29 +572,31 @@ async function showClassLists() {
     cell.appendChild(document.createTextNode(classItem.innerHTML));
     cell = newRow.insertCell();
     cell.appendChild(document.createTextNode(classItem.id));
-    console.log(classItem.id);
-    console.log(classItem.innerHTML);
   }
-  return false;
+  return true;
 }
 
 async function showRecentCheckIns() {
   // Current names and codes are contained within the dropdown options
-  let htmlClassList = document.getElementById('current-class').value;
-  /**
-  let classListTable = document.getElementById('class-name-code-table');
-  for (let classItem of Array.from(htmlClassList).slice(1, htmlClassList.length)) {
-    let newRow = classListTable.insertRow();
-    newRow.align = "center";
-    let cell = newRow.insertCell();
-    cell.appendChild(document.createTextNode(classItem.innerHTML));
-    cell = newRow.insertCell();
-    cell.appendChild(document.createTextNode(classItem.id));
-    console.log(classItem.id);
-    console.log(classItem.innerHTML);
-  }
-  **/
-  return false;
+  let htmlCurrentClass = document.getElementById('current-class').value;
+  let checkInResponseTable = document.getElementById('recent-check-in-response-table');
+  removeChildren(checkInResponseTable.children[0], 1);
+  console.log(htmlCurrentClass);
+  let checkInCollection = firebase.firestore().collection('check-ins');
+  let recentCheckIns = checkInCollection.where("classCode", "==", htmlCurrentClass).orderBy("timestamp", "desc").get().then(function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+      let newRow = checkInResponseTable.insertRow();
+      newRow.align = "center";
+      let cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(doc.data().name));
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(doc.data().feeling));
+      cell = newRow.insertCell();
+      let date = doc.data().timestamp.toDate();
+      cell.appendChild(document.createTextNode(date.getMonth() + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
+    })
+  });
+  return true;
 }
 
 function buttonData() {
@@ -616,18 +618,28 @@ async function changeToDataView() {
   if (document.getElementById('class-name-code-table').children[0].children.length == 1) {
     showClassLists();
   }
+  currentClass.addEventListener('change', function(item) {
+    showRecentCheckIns();
+  });
   exitTicketFormElement.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
   dataContentView.removeAttribute('hidden');
+  showRecentCheckIns();
 }
 
 async function changeToCheckInView() {
+  currentClass.removeEventListener('change', function(item) {
+    showRecentCheckIns();
+  });
   exitTicketFormElement.setAttribute('hidden', true);
   dataContentView.setAttribute('hidden', true);
   checkInFormElement.removeAttribute('hidden');
 }
 
 async function changeToExitTicketView() {
+  currentClass.removeEventListener('change', function(item) {
+    showRecentCheckIns();
+  });
   dataContentView.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
   exitTicketFormElement.removeAttribute('hidden');
@@ -655,6 +667,7 @@ var pageContent = document.getElementById('page-content');
 var dataContentView = document.getElementById('data-content');
 var classList = document.getElementById('class-list');
 var currentClass = document.getElementById('current-class');
+
 
 // Shortcuts to DOM Elements for user management.
 var userNameElement = document.getElementById('user-name');
