@@ -578,6 +578,25 @@ async function showClassLists() {
   return false;
 }
 
+async function showRecentCheckIns() {
+  // Current names and codes are contained within the dropdown options
+  let htmlClassList = document.getElementById('current-class').value;
+  /**
+  let classListTable = document.getElementById('class-name-code-table');
+  for (let classItem of Array.from(htmlClassList).slice(1, htmlClassList.length)) {
+    let newRow = classListTable.insertRow();
+    newRow.align = "center";
+    let cell = newRow.insertCell();
+    cell.appendChild(document.createTextNode(classItem.innerHTML));
+    cell = newRow.insertCell();
+    cell.appendChild(document.createTextNode(classItem.id));
+    console.log(classItem.id);
+    console.log(classItem.innerHTML);
+  }
+  **/
+  return false;
+}
+
 function buttonData() {
   changeToDataView();
   menuBar();
