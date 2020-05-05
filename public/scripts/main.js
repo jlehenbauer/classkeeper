@@ -593,7 +593,7 @@ async function showRecentCheckIns() {
       cell.appendChild(document.createTextNode(doc.data().feeling));
       cell = newRow.insertCell();
       let date = doc.data().timestamp.toDate();
-      cell.appendChild(document.createTextNode(date.getMonth() + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
+      cell.appendChild(document.createTextNode((date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
     })
   });
   return true;
