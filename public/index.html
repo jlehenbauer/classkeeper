@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">	
     <script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
 
+	<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+
   </head>
 
   <!-- Top Navigation Menu -->
@@ -84,8 +86,12 @@
 						<th>Question</th>
 						<th>Methods</th>
 					</tr>
-					</table>
-				</div>
+				</table>
+			</div>
+			<div class="chart-container" style="position: relative; height:400px; width:400px">
+				<canvas id="exit-ticket-chart" style="display: none; height:400px; width:400px"></canvas>
+				<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+			</div>
     	</div>	
 
 	    <!-- Check-in Form View-->

@@ -325,8 +325,8 @@ function clearExitTicket(){
   }
   exitTicketFormElement.elements["exit_rating"][rating - 1].checked = false;
   exitTopic.value = '';
-  exitLocation = '';
-  exitQuestion = '';
+  exitLocation.value = '';
+  exitQuestion.value = '';
 
 }
 
@@ -602,15 +602,25 @@ async function showRecentCheckIns() {
   return true;
 }
 
+var exitTicketDates = [];
+var exitTicketRatings = [];
+var numVals = 0;
+
 async function showRecentExitTickets() {
   // Current names and codes are contained within the dropdown options
   let htmlCurrentClass = document.getElementById('current-class').value;
   let exitTicketResponseTable = document.getElementById('recent-exit-ticket-response-table');
   removeChildren(exitTicketResponseTable.children[0], 1);
+
+  exitTicketDates = [];
+  exitTicketRatings = [];
+  numVals = 0;
+
   console.log("writing exit ticket data");
   let exitTicketCollection = firebase.firestore().collection('exit-tickets');
   let recentExitTickets = exitTicketCollection.where("classCode", "==", htmlCurrentClass).orderBy("timestamp", "desc").get().then(function(querySnapshot) {
     querySnapshot.forEach(function(doc) {
+      numVals += 1;
       let newRow = exitTicketResponseTable.insertRow();
       newRow.align = "center";
       let cell = newRow.insertCell();
@@ -618,10 +628,13 @@ async function showRecentExitTickets() {
       cell = newRow.insertCell();
       cell.appendChild(document.createTextNode(doc.data().topic));
       cell = newRow.insertCell();
-      cell.appendChild(document.createTextNode(doc.data().rating));
+      let rating = doc.data().rating;
+      cell.appendChild(document.createTextNode(rating));
+      exitTicketRatings.push(rating);
       cell = newRow.insertCell();
       let date = doc.data().timestamp.toDate();
       cell.appendChild(document.createTextNode((date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
+      exitTicketDates.push(date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear());
       cell = newRow.insertCell();
       let question = document.createTextNode(doc.data().question);
       if(question != '') {
@@ -633,6 +646,13 @@ async function showRecentExitTickets() {
       cell = newRow.insertCell();
       cell.appendChild(document.createTextNode(doc.data().methods));
     })
+    if (numVals > 0) {
+      updateExitTicketChart();
+      exitTicketChartElement.style.display = 'block';
+    }
+    else{
+      exitTicketChartElement.style.display = none;
+    }
   });
   return true;
 }
@@ -659,10 +679,13 @@ async function changeToDataView() {
   currentClass.addEventListener('change', function(item) {
     showRecentCheckIns();
     showRecentExitTickets();
+    updateExitTicketChart();
   });
   exitTicketFormElement.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
   dataContentView.removeAttribute('hidden');
+
+  updateExitTicketChart();
 }
 
 async function changeToCheckInView() {
@@ -774,6 +797,50 @@ roleModalClose.addEventListener('click', closeRoleModal);
 // Saves message on form submit.
 signOutButtonElement.addEventListener('click', signOut);
 signInButtonElement.addEventListener('click', signIn);
+
+// Charts, all elements
+var exitTicketChartElement = document.getElementById("exit-ticket-chart");
+var red = 'rgba(255, 99, 132, 0.2)';
+var blue = 'rgba(54, 162, 235, 0.2)';
+var yellow = 'rgba(255, 206, 86, 0.2)';
+var green = 'rgba(75, 192, 192, 0.2)';
+var purple = 'rgba(153, 102, 255, 0.2)';
+var orange = 'rgba(255, 159, 64, 0.2)';
+
+function updateExitTicketChart() {
+  var exitTIcketChart = new Chart(exitTicketChartElement, {
+    type: 'line',
+    data: {
+      labels: exitTicketDates,
+      datasets: [{
+        label: 'Ratings',
+        data: exitTicketRatings,
+        borderWidth: 5,
+        borderColor: blue,
+        fill: false
+      }]
+    },
+    options: {
+      title: {
+        fontSize: 14
+      },
+      scales: {
+        xAxes: [{
+          ticks: {
+            reverse: true
+          }
+        }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true,
+            max: 10
+          }
+        }]
+      }
+    }
+  });
+}
+
 
 
 // initialize Firebase
