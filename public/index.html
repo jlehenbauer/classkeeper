@@ -20,7 +20,7 @@
     <!-- Navigation links (hidden by default) -->
     <div id="menu-options" style="display: none">
     	<a href="#" id="menu-button-check-in">Check-In</a>
-    	<a href="#" id="menu-button-exit-ticket" style="display: none">Exit Ticket</a>
+    	<a href="#" id="menu-button-exit-ticket">Exit Ticket</a>
     	<a href="#" id="menu-button-data" style="display: none">Class Information</a>
     	<a href="#" id="menu-button-add-class">Add Class</a>
     	<a href="#" onclick="signOut()">Log Out</a>
@@ -73,6 +73,19 @@
 	    			</tr>
 	       		</table>
 	       	</div>
+			<div id="recent-exit-ticket-list" align="center">
+				<h3>Recent Exit Tickets</h3>
+					<table id="recent-exit-ticket-response-table">
+					<tr>
+						<th>Student</th>
+						<th>Topic</th>
+						<th>Rating</th>
+						<th>Date and Time</th>
+						<th>Question</th>
+						<th>Methods</th>
+					</tr>
+					</table>
+				</div>
     	</div>	
 
 	    <!-- Check-in Form View-->

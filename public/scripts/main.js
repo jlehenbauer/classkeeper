@@ -77,10 +77,11 @@ async function getUserRole() {
 }
 
 // Saves a new message on the Firebase DB.
-function saveExitTicket(entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
+function saveExitTicket(currentClass, entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
   // Add a new message entry into the database.
   console.log('Attempting to add to messages database')
   return firebase.firestore().collection('exit-tickets').add({
+    classCode: currentClass,
     name: getUserName(),
     email: getEmail(),
     profile_img: getProfilePicUrl(),
@@ -370,10 +371,11 @@ function onExitTicketFormSubmit() {
   console.log(exitLocation.value);
   console.log(rating);
   console.log(exitQuestion.value);
-  console.log(true == (exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()))
+  console.log(currentClass.value);
+  console.log(true == (currentClass.value && exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()))
   // ^ Check that the user entered a message and is signed in.
   if (exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()) {
-    saveExitTicket(exitTopic.value, getCheckedMethods(), exitLocation.value, rating, exitQuestion.value).then(function() {
+    saveExitTicket(currentClass.value, exitTopic.value, getCheckedMethods(), exitLocation.value, rating, exitQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
@@ -464,10 +466,10 @@ async function authStateObserver(user) {
     classList.setAttribute('hidden', 'true');
 
     // Show role modal
-    roleSignIn();
+    roleSignIn(); 
 
     // Show sign-in button.
-    signInButtonElement.removeAttribute('hidden');
+    signInButtonElement.removeAttribute('hidden');  
   }
 }
 
@@ -526,6 +528,7 @@ function getCheckedMethods() {
 function notifyWithModal(message) {
   modalMessage.innerHTML = message;
   modal.style.display = "block";
+  modal.style.zIndex = 2;
   window.onclick = function(e) {
     if (e.target == modal) {
       modal.style.display = "none";
@@ -599,6 +602,41 @@ async function showRecentCheckIns() {
   return true;
 }
 
+async function showRecentExitTickets() {
+  // Current names and codes are contained within the dropdown options
+  let htmlCurrentClass = document.getElementById('current-class').value;
+  let exitTicketResponseTable = document.getElementById('recent-exit-ticket-response-table');
+  removeChildren(exitTicketResponseTable.children[0], 1);
+  console.log("writing exit ticket data");
+  let exitTicketCollection = firebase.firestore().collection('exit-tickets');
+  let recentExitTickets = exitTicketCollection.where("classCode", "==", htmlCurrentClass).orderBy("timestamp", "desc").get().then(function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+      let newRow = exitTicketResponseTable.insertRow();
+      newRow.align = "center";
+      let cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(doc.data().name));
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(doc.data().topic));
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(doc.data().rating));
+      cell = newRow.insertCell();
+      let date = doc.data().timestamp.toDate();
+      cell.appendChild(document.createTextNode((date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
+      cell = newRow.insertCell();
+      let question = document.createTextNode(doc.data().question);
+      if(question != '') {
+        cell.appendChild(question);
+      }
+      else{
+        cell.appendChild('[none]');
+      }
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(doc.data().methods));
+    })
+  });
+  return true;
+}
+
 function buttonData() {
   changeToDataView();
   menuBar();
@@ -620,11 +658,11 @@ async function changeToDataView() {
   }
   currentClass.addEventListener('change', function(item) {
     showRecentCheckIns();
+    showRecentExitTickets();
   });
   exitTicketFormElement.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
   dataContentView.removeAttribute('hidden');
-  showRecentCheckIns();
 }
 
 async function changeToCheckInView() {

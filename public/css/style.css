@@ -172,6 +172,13 @@ html, body {
         border-collapse: separate;
         border-spacing: 10px;
       }
+      table#recent-exit-ticket-response-table{
+        display: inline-block; 
+        border: 2px solid;
+        border-radius: 10px;
+        border-collapse: separate;
+        border-spacing: 10px;
+      }
       /** Uncomment these sections when moving back to stylized checkboxes **/
       input[type=checkbox]:checked + .check:before {
       background: #095484;
