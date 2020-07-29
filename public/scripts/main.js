@@ -602,8 +602,9 @@ async function showRecentCheckIns() {
   return true;
 }
 
-var exitTicketDates = [];
-var exitTicketRatings = [];
+// Create variables to enable charts for exit ticket data
+var exitTicketDates = new Map();
+var exitTicketRatings = new Map();
 var numVals = 0;
 
 async function showRecentExitTickets() {
@@ -612,40 +613,56 @@ async function showRecentExitTickets() {
   let exitTicketResponseTable = document.getElementById('recent-exit-ticket-response-table');
   removeChildren(exitTicketResponseTable.children[0], 1);
 
-  exitTicketDates = [];
-  exitTicketRatings = [];
-  numVals = 0;
-
   console.log("writing exit ticket data");
   let exitTicketCollection = firebase.firestore().collection('exit-tickets');
   let recentExitTickets = exitTicketCollection.where("classCode", "==", htmlCurrentClass).orderBy("timestamp", "desc").get().then(function(querySnapshot) {
     querySnapshot.forEach(function(doc) {
       numVals += 1;
+      // Name all this to make it easier to handle
+      let name = doc.data().name;
+      let topic = doc.data().topic;
+      let rating = doc.data().rating;
+      let date = doc.data().timestamp.toDate();
+      let formattedDate = date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear();
+      let question = doc.data().question;
+      let methods = doc.data().methods;
+
+      // Fill the data table with another row for the new document
       let newRow = exitTicketResponseTable.insertRow();
       newRow.align = "center";
       let cell = newRow.insertCell();
-      cell.appendChild(document.createTextNode(doc.data().name));
+      cell.appendChild(document.createTextNode(name));
       cell = newRow.insertCell();
-      cell.appendChild(document.createTextNode(doc.data().topic));
+      cell.appendChild(document.createTextNode(topic));
       cell = newRow.insertCell();
-      let rating = doc.data().rating;
       cell.appendChild(document.createTextNode(rating));
-      exitTicketRatings.push(rating);
       cell = newRow.insertCell();
-      let date = doc.data().timestamp.toDate();
       cell.appendChild(document.createTextNode((date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
-      exitTicketDates.push(date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear());
       cell = newRow.insertCell();
-      let question = document.createTextNode(doc.data().question);
-      if(question != '') {
-        cell.appendChild(question);
-      }
-      else{
-        cell.appendChild('[none]');
-      }
+      cell.appendChild(document.createTextNode(question));
       cell = newRow.insertCell();
-      cell.appendChild(document.createTextNode(doc.data().methods));
-    })
+      cell.appendChild(document.createTextNode(methods));
+
+      // Push data to variables for charts
+      try {
+        let ratings = exitTicketRatings.get(name);
+        ratings.push(rating);
+        exitTicketRatings.set(name, ratings);
+      }
+      catch(err){
+        exitTicketRatings.set(name, [rating]);
+      }
+      try {
+        let dates = exitTicketDates.get(name);
+        dates.push(formattedDate);
+        exitTicketDates.set(name, dates);
+      }
+      catch(err){
+        exitTicketDates.set(name, [formattedDate])
+      }
+    });
+
+
     if (numVals > 0) {
       updateExitTicketChart();
       exitTicketChartElement.style.display = 'block';
@@ -800,25 +817,56 @@ signInButtonElement.addEventListener('click', signIn);
 
 // Charts, all elements
 var exitTicketChartElement = document.getElementById("exit-ticket-chart");
-var red = 'rgba(255, 99, 132, 0.2)';
-var blue = 'rgba(54, 162, 235, 0.2)';
-var yellow = 'rgba(255, 206, 86, 0.2)';
-var green = 'rgba(75, 192, 192, 0.2)';
-var purple = 'rgba(153, 102, 255, 0.2)';
-var orange = 'rgba(255, 159, 64, 0.2)';
+
+function getRandomColor() {
+  var letters = '0123456789ABCDEF'.split('');
+  var color = '#';
+  for (var i = 0; i < 6; i++ ) {
+      color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+
+/**
+ * TODO:
+ * 
+ *  - add 'ratings by method' chart
+ *  - add 'ratings totals' chart
+ *  - option for time frame?
+ */
+var dates = new Set();
+var names = new Set();
+
+function generateStudentRatingData(dates, studentRatings, studentDates) {
+  let ratingData = new Map();
+  studentDates.forEach( function(value, key, map) {
+    ratingData.set(key, []);
+    dates.forEach( function(date) {
+      let ind = studentDates.get(key).indexOf(date);
+      if (value.indexOf(date) !== null){
+        ratingData.get(key).push(studentRatings.get(key)[ind]);
+      }
+      else{
+        ratingData.get(key).push(null);
+      };
+    });
+  });
+  return ratingData;
+}
+
 
 function updateExitTicketChart() {
-  var exitTIcketChart = new Chart(exitTicketChartElement, {
+  exitTicketDates.forEach( function(value, key, map){
+    names.add(key);
+    value.forEach(function(val){dates.add(val)});
+  });
+
+  let ratings = generateStudentRatingData(dates, exitTicketRatings, exitTicketDates);
+
+  var exitTicketChart = new Chart(exitTicketChartElement, {
     type: 'line',
     data: {
-      labels: exitTicketDates,
-      datasets: [{
-        label: 'Ratings',
-        data: exitTicketRatings,
-        borderWidth: 5,
-        borderColor: blue,
-        fill: false
-      }]
+      labels: Array.from(dates)
     },
     options: {
       title: {
@@ -839,6 +887,20 @@ function updateExitTicketChart() {
       }
     }
   });
+
+  // Fill chart with data for each student with random colors
+  ratings.forEach( function (value, key, map) {
+    exitTicketChart.data.datasets.push({
+      label: key,
+      data: value,
+      borderWidth: 3,
+      borderColor: getRandomColor(),
+      fill: false
+    })
+  });
+
+  exitTicketChart.update();
+
 }
 
 
