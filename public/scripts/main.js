@@ -312,7 +312,6 @@ async function addClass() {
   closeMessageModal();
 
   displayClassLists(user, 'check-in-current-class');
-  location.reload(true);
   return true;
   // TODO: clear the modal and class code elements from the modal
 }
@@ -585,27 +584,60 @@ async function showRecentCheckIns() {
   let checkInResponseTable = document.getElementById('recent-check-in-response-table');
   removeChildren(checkInResponseTable.children[0], 1);
   console.log(htmlCurrentClass);
+
   let checkInCollection = firebase.firestore().collection('check-ins');
   let recentCheckIns = checkInCollection.where("classCode", "==", htmlCurrentClass).orderBy("timestamp", "desc").get().then(function(querySnapshot) {
-    querySnapshot.forEach(function(doc) {
+    querySnapshot.forEach( function(doc) {
+      let name = doc.data().name;
+      let rating = doc.data().feeling;
+      let date = doc.data().timestamp.toDate();
+      let formattedDate = date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear();
+      
       let newRow = checkInResponseTable.insertRow();
       newRow.align = "center";
       let cell = newRow.insertCell();
-      cell.appendChild(document.createTextNode(doc.data().name));
+      cell.appendChild(document.createTextNode(name));
       cell = newRow.insertCell();
-      cell.appendChild(document.createTextNode(doc.data().feeling));
+      cell.appendChild(document.createTextNode(rating));
       cell = newRow.insertCell();
-      let date = doc.data().timestamp.toDate();
       cell.appendChild(document.createTextNode((date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
+    
+      // Maintain list of all students in class
+      if (!currentStudentNames.has(name)){
+        currentStudentNames.add(name);
+      }
+
+      // Push data to variables for charts
+      try {
+        let ratings = checkInRatings.get(name);
+        ratings.push(rating);
+        checkInRatings.set(name, ratings);
+      }
+      catch(err){
+        checkInRatings.set(name, [rating]);
+      }
+      try {
+        let dates = checkInDates.get(name);
+        dates.push(formattedDate);
+        checkInDates.set(name, dates);
+      }
+      catch(err){
+        checkInDates.set(name, [formattedDate])
+      }
     })
+    
+    if (currentStudentNames.size > 0) {
+      updateCheckInChart(Array.from(currentStudentNames));
+      updateStudentDataSelectorList();
+      checkInChartElement.style.display = 'inline-block';
+    }
+    else{
+      checkInChartElement.style.display = 'none';
+    }
+
   });
   return true;
 }
-
-// Create variables to enable charts for exit ticket data
-var exitTicketDates = new Map();
-var exitTicketRatings = new Map();
-var numVals = 0;
 
 async function showRecentExitTickets() {
   // Current names and codes are contained within the dropdown options
@@ -643,6 +675,11 @@ async function showRecentExitTickets() {
       cell = newRow.insertCell();
       cell.appendChild(document.createTextNode(methods));
 
+      // Maintain list of all students in class
+      if (!currentStudentNames.has(name)){
+        currentStudentNames.add(name);
+      }
+
       // Push data to variables for charts
       try {
         let ratings = exitTicketRatings.get(name);
@@ -660,18 +697,54 @@ async function showRecentExitTickets() {
       catch(err){
         exitTicketDates.set(name, [formattedDate])
       }
-    });
+      try {
+        // TODO: Create methods aggregation
+      }
+      catch {
+        exitTicketMethodRatings.set(name, [methods, ratings])
+      }
+    })
 
-
-    if (numVals > 0) {
-      updateExitTicketChart();
-      exitTicketChartElement.style.display = 'block';
+    if (currentStudentNames.size > 0) {
+      updateExitTicketChart(Array.from(currentStudentNames));
+      updateStudentDataSelectorList();
+      exitTicketChartElement.style.display = 'inline-block';
     }
     else{
-      exitTicketChartElement.style.display = none;
+      exitTicketChartElement.style.display = 'none';
     }
+    
   });
   return true;
+}
+
+function updateStudentDataSelectorList(){
+  if (exitTicketRatings.size > 0){
+    let studentSelectorList = document.getElementById('student-selector-list');
+    removeAllChildren(studentSelectorList);
+    
+    let allStudents = document.createElement('option');
+    allStudents.id = "all-students";
+    allStudents.value = "all-students";
+    allStudents.innerHTML = "All students";
+    studentSelectorList.appendChild(allStudents);
+
+    Array.from(currentStudentNames).forEach( function(name) {
+      var newStudent = document.createElement('option');
+      newStudent.id = name;
+      newStudent.value = name;
+      newStudent.innerHTML = name;
+      studentSelectorList.appendChild(newStudent);
+    });
+    return true;
+  }
+  return false;
+}
+
+function removeAllChildren(parent) {
+  while (parent.firstChild) {
+    parent.removeChild(parent.firstChild)
+  }
 }
 
 function buttonData() {
@@ -694,20 +767,31 @@ async function changeToDataView() {
     showClassLists();
   }
   currentClass.addEventListener('change', function(item) {
+    currentStudentNames = new Set();
+    exitTicketDates = new Map();
+    checkInDates = new Map();
+    updateStudentDataSelectorList();
     showRecentCheckIns();
     showRecentExitTickets();
-    updateExitTicketChart();
+    updateExitTicketChart(Array.from(currentStudentNames));
+    updateCheckInChart(Array.from(currentStudentNames));
   });
   exitTicketFormElement.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
   dataContentView.removeAttribute('hidden');
 
-  updateExitTicketChart();
+  updateExitTicketChart(Array.from(currentStudentNames));
+  updateCheckInChart(Array.from(currentStudentNames));
+  updateStudentDataSelectorList();
 }
 
 async function changeToCheckInView() {
   currentClass.removeEventListener('change', function(item) {
     showRecentCheckIns();
+    showRecentExitTickets();
+    updateExitTicketChart();
+    updateCheckInChart();
+    updateStudentDataSelectorList();
   });
   exitTicketFormElement.setAttribute('hidden', true);
   dataContentView.setAttribute('hidden', true);
@@ -717,6 +801,10 @@ async function changeToCheckInView() {
 async function changeToExitTicketView() {
   currentClass.removeEventListener('change', function(item) {
     showRecentCheckIns();
+    showRecentExitTickets();
+    updateExitTicketChart();
+    updateCheckInChart();
+    updateStudentDataSelectorList();
   });
   dataContentView.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
@@ -735,6 +823,20 @@ function menuBar() {
     display_header.style= "padding-top: 300px";
     console.log(menu_display.style.height);
   }
+}
+
+function studentDataSelectorListener() {
+  /**
+   * Update visible charts for just student selected
+   * Create charts for individual student
+   */
+  let selectedStudent = studentSelector.selectedOptions[0].value;
+  updateExitTicketChart([selectedStudent]);
+  updateCheckInChart([selectedStudent]);
+
+  // Collect methods from exit tickets
+
+  updateMethodsChart(selectedStudent);
 }
 
 // Checks that Firebase has been imported.
@@ -815,8 +917,24 @@ roleModalClose.addEventListener('click', closeRoleModal);
 signOutButtonElement.addEventListener('click', signOut);
 signInButtonElement.addEventListener('click', signIn);
 
+// Create variables for student data to enable charts for exit tickets and check-ins
+var exitTicketDates = new Map();
+var exitTicketRatings = new Map();
+var checkInRatings = new Map();
+var checkInDates = new Map();
+var currentStudentNames = new Set();
+var exitTicketMethodRatings = new Set();
+var exitMethods = ["Google Classroom", "OneNote", "Paper Notebook", "Worksheet", "Written Notes", "Class Activity", "Calculator", "Workbook", "Whiteboard", "Class Discussion", "PantherPortal"];
+var numVals = 0;
+
+
+
 // Charts, all elements
 var exitTicketChartElement = document.getElementById("exit-ticket-chart");
+var checkInChartElement = document.getElementById("check-in-chart");
+var methodsChart = document.getElementById("methods-chart");
+var studentSelector = document.getElementById("student-selector-list");
+studentSelector.addEventListener('change', studentDataSelectorListener)
 
 function getRandomColor() {
   var letters = '0123456789ABCDEF'.split('');
@@ -831,44 +949,53 @@ function getRandomColor() {
  * TODO:
  * 
  *  - add 'ratings by method' chart
+ *  - make colors consistent per student for checkin/exit
  *  - add 'ratings totals' chart
  *  - option for time frame?
  */
-var dates = new Set();
-var names = new Set();
 
-function generateStudentRatingData(dates, studentRatings, studentDates) {
+function generateRatingData(dates, names, currentRatings, currentDates) {
   let ratingData = new Map();
-  studentDates.forEach( function(value, key, map) {
-    ratingData.set(key, []);
-    dates.forEach( function(date) {
-      let ind = studentDates.get(key).indexOf(date);
-      if (value.indexOf(date) !== null){
-        ratingData.get(key).push(studentRatings.get(key)[ind]);
-      }
-      else{
-        ratingData.get(key).push(null);
-      };
-    });
+  currentDates.forEach( function(value, key, map) {
+    if (names.includes(key) || names[0] == 'all-students') {
+      ratingData.set(key, []);
+      dates.forEach( function(date) {
+        let ind = currentDates.get(key).indexOf(date);
+        if (value.indexOf(date) !== null){
+          ratingData.get(key).push(currentRatings.get(key)[ind]);
+        }
+        else{
+          ratingData.get(key).push(null);
+        };
+      });
+    }
   });
   return ratingData;
 }
 
 
-function updateExitTicketChart() {
-  exitTicketDates.forEach( function(value, key, map){
-    names.add(key);
-    value.forEach(function(val){dates.add(val)});
-  });
+function updateExitTicketChart(names, dates) {
 
-  let ratings = generateStudentRatingData(dates, exitTicketRatings, exitTicketDates);
+  // Create names and Dates lists
+  if (dates == undefined) {
+    dates = new Set();
+    exitTicketDates.forEach( function(value, key, map){
+      value.forEach(function(val){dates.add(val)});
+    });
+  }
 
+  // Create blank chart with appropriate dates as labels
   var exitTicketChart = new Chart(exitTicketChartElement, {
     type: 'line',
     data: {
       labels: Array.from(dates)
     },
     options: {
+      layout: {
+        padding: {
+          right: 30
+        }
+      },
       title: {
         fontSize: 14
       },
@@ -887,22 +1014,110 @@ function updateExitTicketChart() {
       }
     }
   });
+  
+  // Create per-student ratings data to populate chart
+  let ratings = generateRatingData(dates, names, exitTicketRatings, exitTicketDates);
 
   // Fill chart with data for each student with random colors
   ratings.forEach( function (value, key, map) {
-    exitTicketChart.data.datasets.push({
-      label: key,
-      data: value,
-      borderWidth: 3,
-      borderColor: getRandomColor(),
-      fill: false
-    })
+    if (names.includes(key) || names[0] == 'all-students'){
+      exitTicketChart.data.datasets.push({
+        label: key,
+        data: value,
+        borderWidth: 3,
+        borderColor: getRandomColor(),
+        fill: false
+      })
+    }
   });
 
   exitTicketChart.update();
 
 }
 
+function updateCheckInChart(names, dates) {
+
+  // Create names and Dates lists
+  if (dates == undefined) {
+    dates = new Set();
+    checkInDates.forEach( function(value, key, map){
+      value.forEach(function(val){dates.add(val)});
+    });
+  }
+
+  // Create blank chart with appropriate dates as labels
+  var checkInChart = new Chart(checkInChartElement, {
+    type: 'line',
+    data: {
+      labels: Array.from(dates)
+    },
+    options: {
+      layout: {
+        padding: {
+          right: 30
+        }
+      },
+      title: {
+        fontSize: 14
+      },
+      scales: {
+        xAxes: [{
+          ticks: {
+            reverse: true
+          }
+        }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true,
+            max: 10
+          }
+        }]
+      }
+    }
+  });
+  
+  // Create per-student ratings data to populate chart
+  let ratings = generateRatingData(dates, names, checkInRatings, checkInDates);
+
+  // Fill chart with data for each student with random colors
+  ratings.forEach( function (value, key, map) {
+    if (names.includes(key) || names[0] == 'all-students'){
+      checkInChart.data.datasets.push({
+        label: key,
+        data: value,
+        borderWidth: 3,
+        borderColor: getRandomColor(),
+        fill: false
+      })
+    }
+  });
+
+  checkInChart.update();
+  
+}
+
+function updateMethodsChart(name) {
+    // Create chart with appropriate methods as labels
+    var methodsChart = new Chart(methodsChartElement, {
+      type: 'bar',
+      data: {
+        labels: exitMethods,
+        datasets: [{
+
+        }]
+      },
+      options: {
+        layout: {
+          padding: {
+            right: 30
+          }
+        },
+        title: {
+          fontSize: 14
+        }
+      }
+    });
+}
 
 
 // initialize Firebase

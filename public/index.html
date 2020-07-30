@@ -88,9 +88,25 @@
 					</tr>
 				</table>
 			</div>
-			<div class="chart-container" style="position: relative; height:400px; width:400px">
-				<canvas id="exit-ticket-chart" style="display: none; height:400px; width:400px"></canvas>
+			<div id="class-charts" style="display: flex">
+				<div class="chart-container" style="padding: 15px; position: relative; height:400px; width:400px">
+					<canvas id="exit-ticket-chart" style="display: none; height:400px; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>
+				<div class="chart-container" style="padding: 15px; position: relative; height:400px; width:400px">
+					<canvas id="check-in-chart" style="display: none; height:400px; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>
+			</div>
+			<div class="chart-container" style="padding: 15px; position: relative; height:400px; width:400px">
+				<canvas id="methods-chart" style="display: none; height:400px; width:400px"></canvas>
 				<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+			</div>
+			<div>
+				<h2>Student info</h2>
+				<select id="student-selector-list">
+					<option class="disabled" value="" disabled selected></option>Please select a student</option>
+				</select>
 			</div>
     	</div>	
 
