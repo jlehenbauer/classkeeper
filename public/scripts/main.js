@@ -326,7 +326,6 @@ function clearExitTicket(){
   exitTopic.value = '';
   exitLocation.value = '';
   exitQuestion.value = '';
-
 }
 
 // Custom check-in
@@ -360,7 +359,7 @@ function onMediaFileSelected(event) {
   }
 }
 
-// Class Keeper: Triggered when the send new message form is submitted.
+// Class Keeper: Triggered when the send new exit ticket is submitted.
 function onExitTicketFormSubmit() {
   //e.preventDefault();
   let rating = exitTicketFormElement.elements["exit_rating"].value;
@@ -373,6 +372,10 @@ function onExitTicketFormSubmit() {
   console.log(currentClass.value);
   console.log(true == (currentClass.value && exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()))
   // ^ Check that the user entered a message and is signed in.
+  if (currentClass.value == undefined) {
+    notifyWithModal("Please select a class at the top of the page!");
+    return false;
+  }
   if (exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()) {
     saveExitTicket(currentClass.value, exitTopic.value, getCheckedMethods(), exitLocation.value, rating, exitQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
@@ -381,11 +384,13 @@ function onExitTicketFormSubmit() {
       clearExitTicket();
       notifyWithModal("Thank you for submitting your exit ticket!");
     });
+    return true;
   }
+  notifyWithModal("Make sure you've filled out everything before you submit!");
   return false;
 }
 
-// Class Keeper: Triggered when the send check-in is submitted.
+// Class Keeper: Triggered when the check-in is submitted.
 function onCheckInSubmit() {
   //e.preventDefault();
   var rating = checkInFormElement.elements["rating"].value;
@@ -396,6 +401,10 @@ function onCheckInSubmit() {
   console.log(currentClass.value)
   console.log(true == (rating && checkSignedInWithMessage()));
   // ^ Check that the user entered a message and is signed in.
+  if (currentClass.value == undefined) {
+    notifyWithModal("Please select a class at the top of the page!");
+    return false;
+  }
   if (currentClass.value && rating && checkSignedInWithMessage()) {
     saveCheckIn(rating, pleaseKnow.value, contentQuestion.value, currentClass.value).then(function() {
       // Clear message text field and re-enable the SEND button.
@@ -404,7 +413,9 @@ function onCheckInSubmit() {
       clearCheckInForm();
       notifyWithModal("Thank you for submitting your check-in, have a great day!");
     });
+    return true;
   }
+  notifyWithModal("Make sure you've filled out everything before you submit!");
   return false;
 }
 
@@ -924,7 +935,7 @@ var checkInRatings = new Map();
 var checkInDates = new Map();
 var currentStudentNames = new Set();
 var exitTicketMethodRatings = new Set();
-var exitMethods = ["Google Classroom", "OneNote", "Paper Notebook", "Worksheet", "Written Notes", "Class Activity", "Calculator", "Workbook", "Whiteboard", "Class Discussion", "PantherPortal"];
+var exitTicketMethodsList = ["Google Classroom", "OneNote", "Paper Notebook", "Worksheet", "Written Notes", "Class Activity", "Calculator", "Workbook", "Whiteboard", "Class Discussion", "PantherPortal"];
 var numVals = 0;
 
 
