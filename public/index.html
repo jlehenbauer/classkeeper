@@ -35,7 +35,7 @@
   </div>
 
   <body>
-    <div class="sign-in-header" align="center">
+    <div class="sign-in-header no-print" align="center">
         <div class="sign-in-buttons" style="display: inline-block">
         	<button id="sign-in" hidden>Sign in</button>
         	<button id="sign-in-teacher" hidden>Teacher Sign Up</button>
@@ -47,7 +47,7 @@
 
     <div class="testbox" id="page-content" style="display: block">
         <div class="question" id="class-list" name="class-list" align="center" style="padding-bottom: 20px" hidden>
-            <h2>Please select your class:<span class="required">*</span></h2>
+            <h2>Class:<span class="required">*</span></h2>
             <div class="question-answer">
                 <select id="current-class">
                 <option class="disabled" value="" disabled selected></option>Please Select</option>
@@ -56,15 +56,26 @@
         </div>
 
     	<div id="data-content" hidden>
-    		<div id="class-code-list">
-    			<h3>Class Codes</h3>
-	    		<table id="class-name-code-table">
-	    			<tr>
-	    				<th>Class name</th>
-	    				<th>Class code</th>
-	    			</tr>
-	       		</table>
-	       	</div>
+			<div align="center">
+				<h2>Student info</h2>
+				<select id="student-selector-list">
+					<option class="disabled" value="" disabled selected></option>Please select a student</option>
+				</select>
+			</div>
+			<div id="class-charts" style="display: flex; margin: auto;">
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:400px; width:400px">
+					<canvas id="check-in-chart" style="display: none; height:400px; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:400px; width:400px">
+					<canvas id="exit-ticket-chart" style="display: none; height:400px; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>
+			</div>
+			<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:500px; width:500px">
+				<canvas id="methods-chart" style="margin: auto; height:500px; width:500px"></canvas>
+				<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+			</div>   
     		<div id="recent-check-in-list" align="center">
     			<h3>Recent Check-ins</h3>
 	       		<table id="recent-check-in-response-table">
@@ -87,26 +98,6 @@
 						<th>Methods</th>
 					</tr>
 				</table>
-			</div>
-			<div id="class-charts" style="display: flex">
-				<div class="chart-container" style="padding: 15px; position: relative; height:400px; width:400px">
-					<canvas id="exit-ticket-chart" style="display: none; height:400px; width:400px"></canvas>
-					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
-				</div>
-				<div class="chart-container" style="padding: 15px; position: relative; height:400px; width:400px">
-					<canvas id="check-in-chart" style="display: none; height:400px; width:400px"></canvas>
-					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
-				</div>
-			</div>
-			<div class="chart-container" style="padding: 15px; position: relative; height:400px; width:400px">
-				<canvas id="methods-chart" style="display: none; height:400px; width:400px"></canvas>
-				<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
-			</div>
-			<div>
-				<h2>Student info</h2>
-				<select id="student-selector-list">
-					<option class="disabled" value="" disabled selected></option>Please select a student</option>
-				</select>
 			</div>
     	</div>	
 
@@ -377,7 +368,18 @@
 		    </form>
 		</div>
 
-    </div>
+	</div>
+	
+	<!-- Class code modal -->
+	<div id="class-code-list" class="modal" hidden>
+		<h3>Class Codes</h3>
+		<table id="class-name-code-table">
+			<tr>
+				<th>Class name</th>
+				<th>Class code</th>
+			</tr>
+		   </table>
+	</div>
 
     <!-- Message Modal -->
     <div id="confirmation" class="modal">

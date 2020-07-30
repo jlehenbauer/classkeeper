@@ -638,6 +638,7 @@ async function showRecentCheckIns() {
     })
     
     if (currentStudentNames.size > 0) {
+      setPerStudentColors();
       updateCheckInChart(Array.from(currentStudentNames));
       updateStudentDataSelectorList();
       checkInChartElement.style.display = 'inline-block';
@@ -710,13 +711,25 @@ async function showRecentExitTickets() {
       }
       try {
         // TODO: Create methods aggregation
+        methods.forEach(function(method) {
+          let currentRatings = exitTicketMethodRatings.get(name).get(method);
+          currentRatings.push(rating);
+          exitTicketMethodRatings.get(name).set(method, currentRatings);
+        });
       }
       catch {
-        exitTicketMethodRatings.set(name, [methods, ratings])
+        let newMethodMap = createDefaultStudentMethodMap();
+        exitTicketMethodRatings.set(name, newMethodMap)
+        methods.forEach(function(method) {
+          let currentRatings = exitTicketMethodRatings.get(name).get(method);
+          currentRatings.push(rating);
+          exitTicketMethodRatings.get(name).set(method, currentRatings);
+        });
       }
     })
 
     if (currentStudentNames.size > 0) {
+      setPerStudentColors();
       updateExitTicketChart(Array.from(currentStudentNames));
       updateStudentDataSelectorList();
       exitTicketChartElement.style.display = 'inline-block';
@@ -727,6 +740,14 @@ async function showRecentExitTickets() {
     
   });
   return true;
+}
+
+function createDefaultStudentMethodMap() {
+  let methodsMap = new Map();
+  exitTicketMethodsList.forEach(function(method){
+    methodsMap.set(method, []);
+  });
+  return methodsMap;
 }
 
 function updateStudentDataSelectorList(){
@@ -934,7 +955,8 @@ var exitTicketRatings = new Map();
 var checkInRatings = new Map();
 var checkInDates = new Map();
 var currentStudentNames = new Set();
-var exitTicketMethodRatings = new Set();
+var currentStudentColors = new Map();
+var exitTicketMethodRatings = new Map();
 var exitTicketMethodsList = ["Google Classroom", "OneNote", "Paper Notebook", "Worksheet", "Written Notes", "Class Activity", "Calculator", "Workbook", "Whiteboard", "Class Discussion", "PantherPortal"];
 var numVals = 0;
 
@@ -943,17 +965,32 @@ var numVals = 0;
 // Charts, all elements
 var exitTicketChartElement = document.getElementById("exit-ticket-chart");
 var checkInChartElement = document.getElementById("check-in-chart");
-var methodsChart = document.getElementById("methods-chart");
+var methodsChartElement = document.getElementById("methods-chart");
 var studentSelector = document.getElementById("student-selector-list");
 studentSelector.addEventListener('change', studentDataSelectorListener)
 
-function getRandomColor() {
-  var letters = '0123456789ABCDEF'.split('');
-  var color = '#';
-  for (var i = 0; i < 6; i++ ) {
-      color += letters[Math.floor(Math.random() * 16)];
+function getRandomColor(alpha) {
+  var color = 'rgba(';
+  for (var i = 0; i < 3; i++ ) {
+      color += String(Math.floor(Math.random() * 255)) + ",";
   }
+  if (alpha == undefined) {
+    alpha = 1;
+  }
+  color += alpha + ")";
+  console.log(color);
   return color;
+}
+
+// Generate static colors for each student (on class load)
+function setPerStudentColors() {
+  Array.from(currentStudentNames).forEach(function(name){
+    if (currentStudentColors.get(name) == undefined) {
+      let color = getRandomColor();
+      currentStudentColors.set(name, color);
+    }
+  });
+  return true;
 }
 
 /**
@@ -1008,6 +1045,8 @@ function updateExitTicketChart(names, dates) {
         }
       },
       title: {
+        display: true,
+        text: "Exit Ticket Ratings",
         fontSize: 14
       },
       scales: {
@@ -1029,14 +1068,14 @@ function updateExitTicketChart(names, dates) {
   // Create per-student ratings data to populate chart
   let ratings = generateRatingData(dates, names, exitTicketRatings, exitTicketDates);
 
-  // Fill chart with data for each student with random colors
+  // Fill chart with data for each student with assigned colors
   ratings.forEach( function (value, key, map) {
     if (names.includes(key) || names[0] == 'all-students'){
       exitTicketChart.data.datasets.push({
         label: key,
         data: value,
         borderWidth: 3,
-        borderColor: getRandomColor(),
+        borderColor: currentStudentColors.get(key),
         fill: false
       })
     }
@@ -1069,6 +1108,8 @@ function updateCheckInChart(names, dates) {
         }
       },
       title: {
+        display: true,
+        text: "Check-in Ratings",
         fontSize: 14
       },
       scales: {
@@ -1097,7 +1138,7 @@ function updateCheckInChart(names, dates) {
         label: key,
         data: value,
         borderWidth: 3,
-        borderColor: getRandomColor(),
+        borderColor: currentStudentColors.get(key),
         fill: false
       })
     }
@@ -1109,12 +1150,72 @@ function updateCheckInChart(names, dates) {
 
 function updateMethodsChart(name) {
     // Create chart with appropriate methods as labels
+
+    let averages = new Map();
+    let frequencies = new Map();
+    let studentRatings = exitTicketMethodRatings.get(name);
+
+    if (name == "all-students") {
+      name = "Please select a student";
+      averages = [0];
+    }
+    else if (studentRatings == undefined) {
+      name = "No Responses";
+      averages = [0];
+    }
+    else{
+      // Create averages from the values
+      Array.from(studentRatings.keys()).forEach( function (method) {
+        if (studentRatings.get(method).length > 0){
+          let total = studentRatings.get(method).reduce(function(a, b){return +a + +b}, 0);
+          let average = total / studentRatings.get(method).length;
+          averages.set(method, average);
+        }
+        else{
+          averages.set(method, 0);
+        }
+      });
+
+      // Create usage frequencies from the values
+      Array.from(studentRatings.keys()).forEach( function (method) {
+        if (studentRatings.get(method).length > 0){
+          
+          let total = studentRatings.get(method).length;
+          let average = total / exitTicketRatings.get(name).length;
+          frequencies.set(method, average*10);
+        }
+        else{
+          frequencies.set(method, 0);
+        }
+      });
+    }
+
+    let freqColor = getRandomColor(0.6);
+
     var methodsChart = new Chart(methodsChartElement, {
       type: 'bar',
       data: {
-        labels: exitMethods,
+        labels: exitTicketMethodsList,
         datasets: [{
-
+          xAxisID: 'ratings',
+          label: "Average Rating",
+          data: Array.from(averages.values()),
+          borderWidth: 1,
+          borderColor: currentStudentColors.get(name),
+          backgroundColor: currentStudentColors.get(name),
+          fill: true,
+          stack: "background",
+          barPercentage: 0.7
+        },
+        {
+          xAxisID: 'frequencies',
+          label: "% Used",
+          data: Array.from(frequencies.values()),
+          borderwidth: 0,
+          bordercolor: freqColor,
+          backgroundColor: freqColor,
+          fill: true,
+          barPercentage: 1.25
         }]
       },
       options: {
@@ -1124,10 +1225,38 @@ function updateMethodsChart(name) {
           }
         },
         title: {
+          display: true,
+          text: "Class Methods Use and Ratings",
           fontSize: 14
+        },
+        scales: {
+          xAxes: [{
+            id: 'ratings',
+            stacked: true,
+            fillOpacity: 1
+          },
+          {
+            id: 'frequencies',
+            stacked: true,
+            display: false,
+            gridLines: {
+              offsetGridlines: true
+            },
+            offset: true,
+            fillOpacity: 0.3
+          }],
+          yAxes: [{
+            stacked: false,
+            ticks: {
+              beginAtZero: true,
+              max: 10
+            }
+          }]
         }
       }
     });
+
+    methodsChart.update();
 }
 
 
