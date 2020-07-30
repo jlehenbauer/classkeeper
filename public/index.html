@@ -72,10 +72,16 @@
 					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
 				</div>
 			</div>
-			<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:500px; width:500px">
-				<canvas id="methods-chart" style="margin: auto; height:500px; width:500px"></canvas>
-				<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
-			</div>   
+			<div id="class-charts" style="display: flex; margin: auto;">
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:500px; width:500px">
+					<canvas id="methods-chart" style="margin: auto; height:500px; width:500px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>   				
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:500px; width:500px">
+					<canvas id="ratings-chart" style="margin: auto; height:400px; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>   
+			</div>
     		<div id="recent-check-in-list" align="center">
     			<h3>Recent Check-ins</h3>
 	       		<table id="recent-check-in-response-table">

@@ -869,6 +869,7 @@ function studentDataSelectorListener() {
   // Collect methods from exit tickets
 
   updateMethodsChart(selectedStudent);
+  updateRantingsChart(selectedStudent);
 }
 
 // Checks that Firebase has been imported.
@@ -966,6 +967,7 @@ var numVals = 0;
 var exitTicketChartElement = document.getElementById("exit-ticket-chart");
 var checkInChartElement = document.getElementById("check-in-chart");
 var methodsChartElement = document.getElementById("methods-chart");
+var ratingsChartElement = document.getElementById("ratings-chart");
 var studentSelector = document.getElementById("student-selector-list");
 studentSelector.addEventListener('change', studentDataSelectorListener)
 
@@ -1257,6 +1259,118 @@ function updateMethodsChart(name) {
     });
 
     methodsChart.update();
+}
+
+
+/**
+ * This is a plugin to enable showingall tooltips on the pie chart below
+ */
+Chart.pluginService.register({
+  beforeRender: function (chart) {
+      if (chart.config.options.showAllTooltips) {
+          // create an array of tooltips
+          // we can't use the chart tooltip because there is only one tooltip per chart
+          chart.pluginTooltips = [];
+          chart.config.data.datasets.forEach(function (dataset, i) {
+              chart.getDatasetMeta(i).data.forEach(function (sector, j) {
+                if(dataset.data[j] !== 0){
+                  chart.pluginTooltips.push(new Chart.Tooltip({
+                      _chart: chart.chart,
+                      _chartInstance: chart,
+                      _data: chart.data,
+                      _options: chart.options.tooltips,
+                      _active: [sector]
+                  }, chart));
+                }
+              });
+          });
+
+          // turn off normal tooltips
+          chart.options.tooltips.enabled = false;
+      }
+  },
+  afterDraw: function (chart, easing) {
+      if (chart.config.options.showAllTooltips) {
+          // we don't want the permanent tooltips to animate, so don't do anything till the animation runs atleast once
+          if (!chart.allTooltipsOnce) {
+              if (easing !== 1)
+                  return;
+              chart.allTooltipsOnce = true;
+          }
+
+          // turn on tooltips
+          chart.options.tooltips.enabled = true;
+          Chart.helpers.each(chart.pluginTooltips, function (tooltip) {
+              tooltip.initialize();
+              tooltip.update();
+              // we don't actually need this since we are not animating tooltips
+              tooltip.pivot();
+              tooltip.transition(easing).draw();
+          });
+          chart.options.tooltips.enabled = false;
+      }
+  }
+})
+
+
+function updateRantingsChart(name){
+
+
+  let ratings = exitTicketRatings.get(name);
+  let ratingCounts = [];
+  let colors = [];
+
+  for(var i = 1; i < 11; i++){
+    let num = ratings.reduce((total,x) => (x == i ? total + 1 : total), 0);
+    ratingCounts.push(num);
+    colors.push(getRandomColor());
+  }
+
+  console.log(exitTicketRatings);
+  console.log(ratings);
+  console.log(ratingCounts);
+  console.log(colors);
+  
+  var options = {
+    tooltipTemplate: "<%= value %>",
+  
+    showTooltips: true,
+  
+    onAnimationComplete: function() {
+      this.showTooltip(this.datasets[0].points, true);
+    },
+    tooltipEvents: []
+  }
+
+
+  // Create blank chart with appropriate dates as labels
+  var ratingsChart = new Chart(ratingsChartElement, {
+    type: 'pie',
+    data: {
+      labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      datasets: [{
+        data: Array.from(ratingCounts),
+        backgroundColor: colors
+      }]
+    },
+    options: {
+      // enable this to show all tooltips
+      // Caution: tooltips will overlap
+      // showAllTooltips: true,
+      layout: {
+        padding: {
+          right: 30
+        }
+      },
+      title: {
+        display: true,
+        text: "Exit Ticket Ratings",
+        fontSize: 14
+      }
+    }
+  });
+
+  ratingsChart.update();
 }
 
 
