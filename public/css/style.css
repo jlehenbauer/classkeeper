@@ -24,8 +24,8 @@ html, body {
       height: inherit;
       margin: auto;
       padding: 20px;
-      min-width: auto;
-      max-width: 850px;
+      min-width: 80%;
+      max-width: 80%;
       }
       form {
       width: 100%;
@@ -179,6 +179,42 @@ html, body {
         border-collapse: separate;
         border-spacing: 10px;
       }
+
+      /** Layout options for Data View grid **/
+      .gridded{
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: minmax(400px, auto);
+      }
+      .top-left{
+        grid-column: 1;
+        grid-row: 1;
+      }
+      .second-left{
+        grid-column: 1;
+        grid-row: 2;
+      }
+      .top-four{
+        grid-column: 2/5;
+        grid-row: 1/2;
+      }
+      .second-mid-two{
+        grid-column: 2/3;
+        grid-row: 3/4;
+      }
+      .second-right-two{
+        grid-column: 4/5;
+        grid-row: 3/4;
+      }
+      .third-left-two{
+        grid-column: 1/2;
+        grid-row: 5;
+      }
+      .third-right-three{
+        grid-column: 3/5;
+        grid-row: 5
+      }
+
       /** Uncomment these sections when moving back to stylized checkboxes **/
       input[type=checkbox]:checked + .check:before {
       background: #095484;
@@ -334,4 +370,10 @@ html, body {
       .active {
         background-color: #096084;
         color: white;
+      }
+      @media print
+      {
+        .no-print {
+          display: none !important;
+        }
       }
