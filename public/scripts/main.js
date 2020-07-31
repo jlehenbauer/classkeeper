@@ -869,7 +869,7 @@ function studentDataSelectorListener() {
   // Collect methods from exit tickets
 
   updateMethodsChart(selectedStudent);
-  updateRantingsChart(selectedStudent);
+  updateRatingsChart(selectedStudent);
 }
 
 // Checks that Firebase has been imported.
@@ -965,9 +965,13 @@ var numVals = 0;
 
 // Charts, all elements
 var exitTicketChartElement = document.getElementById("exit-ticket-chart");
+var exitTicketChart = undefined;
 var checkInChartElement = document.getElementById("check-in-chart");
+var checkInChart = undefined;
 var methodsChartElement = document.getElementById("methods-chart");
+var methodsChart = undefined;
 var ratingsChartElement = document.getElementById("ratings-chart");
+var ratingsChart = undefined;
 var studentSelector = document.getElementById("student-selector-list");
 studentSelector.addEventListener('change', studentDataSelectorListener)
 
@@ -1023,6 +1027,16 @@ function generateRatingData(dates, names, currentRatings, currentDates) {
   return ratingData;
 }
 
+function removeCurrentData(chart){
+  if (chart !== undefined) {
+    while (chart.data.datasets.length > 0) {
+      chart.data.datasets.pop();
+    }
+    return true;
+  }
+  return false;
+}
+
 
 function updateExitTicketChart(names, dates) {
 
@@ -1035,7 +1049,7 @@ function updateExitTicketChart(names, dates) {
   }
 
   // Create blank chart with appropriate dates as labels
-  var exitTicketChart = new Chart(exitTicketChartElement, {
+  exitTicketChart = new Chart(exitTicketChartElement, {
     type: 'line',
     data: {
       labels: Array.from(dates)
@@ -1098,7 +1112,7 @@ function updateCheckInChart(names, dates) {
   }
 
   // Create blank chart with appropriate dates as labels
-  var checkInChart = new Chart(checkInChartElement, {
+  checkInChart = new Chart(checkInChartElement, {
     type: 'line',
     data: {
       labels: Array.from(dates)
@@ -1157,13 +1171,19 @@ function updateMethodsChart(name) {
     let frequencies = new Map();
     let studentRatings = exitTicketMethodRatings.get(name);
 
+    removeCurrentData(methodsChart);
+
     if (name == "all-students") {
-      name = "Please select a student";
+      methodsChart.options.title.text = "Select a student to see data";
       averages = [0];
+      methodsChart.update();
+      return false;
     }
     else if (studentRatings == undefined) {
-      name = "No Responses";
+      methodsChart.data.labels = ["No Responses"];
       averages = [0];
+      methodsChart.update();
+      return false;
     }
     else{
       // Create averages from the values
@@ -1194,7 +1214,7 @@ function updateMethodsChart(name) {
 
     let freqColor = getRandomColor(0.6);
 
-    var methodsChart = new Chart(methodsChartElement, {
+    methodsChart = new Chart(methodsChartElement, {
       type: 'bar',
       data: {
         labels: exitTicketMethodsList,
@@ -1254,7 +1274,8 @@ function updateMethodsChart(name) {
               max: 10
             }
           }]
-        }
+        },
+        aspectRatio: 1
       }
     });
 
@@ -1313,12 +1334,28 @@ Chart.pluginService.register({
 })
 
 
-function updateRantingsChart(name){
+function updateRatingsChart(name){
 
 
   let ratings = exitTicketRatings.get(name);
   let ratingCounts = [];
   let colors = [];
+
+  removeCurrentData(ratingsChart);
+
+  if (name == "all-students") {
+    ratingsChart.options.title.text = "Select a student to see data";
+    ratingCounts = [0];
+    ratingsChart.update();
+    return false;
+  }
+  else if (ratings == undefined) {
+    ratingsChart.data.labels = ["No Responses"];
+    ratingCounts = [0];
+    ratingsChart.update();
+    return false;
+  }
+
 
   for(var i = 1; i < 11; i++){
     let num = ratings.reduce((total,x) => (x == i ? total + 1 : total), 0);
@@ -1342,9 +1379,13 @@ function updateRantingsChart(name){
     tooltipEvents: []
   }
 
-
+  if (ratingsChart !== undefined) {
+    while (ratingsChart.data.datasets.length > 0) {
+      ratingsChart.data.datasets.pop();
+    }
+  }
   // Create blank chart with appropriate dates as labels
-  var ratingsChart = new Chart(ratingsChartElement, {
+  ratingsChart = new Chart(ratingsChartElement, {
     type: 'pie',
     data: {
       labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -1366,7 +1407,8 @@ function updateRantingsChart(name){
         display: true,
         text: "Exit Ticket Ratings",
         fontSize: 14
-      }
+      },
+      aspectRatio: 1
     }
   });
 
