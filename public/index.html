@@ -23,7 +23,7 @@
     <div id="menu-options" style="display: none">
     	<a href="#" id="menu-button-check-in">Check-In</a>
     	<a href="#" id="menu-button-exit-ticket">Exit Ticket</a>
-    	<a href="#" id="menu-button-data" style="display: none">Class Information</a>
+		<a href="#" id="menu-button-data" style="display: none">Class Information</a>
     	<a href="#" id="menu-button-add-class">Add Class</a>
     	<a href="#" onclick="signOut()">Log Out</a>
     	<!-- <a href="#about">About</a> -->
@@ -47,7 +47,8 @@
 
     <div class="testbox" id="page-content" style="display: block">
         <div class="question" id="class-list" name="class-list" align="center" style="padding-bottom: 20px" hidden>
-            <h2>Class:<span class="required">*</span></h2>
+			<hr class="only-print" style="display: none; padding: 20px; border: 0px; height: 2px"/>
+			<h2>Class:<span class="required no-print">*</span></h2>
             <div class="question-answer">
                 <select id="current-class">
                 <option class="disabled" value="" disabled selected></option>Please Select</option>
@@ -63,18 +64,18 @@
 				</select>
 			</div>
 			<div id="class-charts" style="display: flex; margin: auto;">
-				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:400px; width:400px">
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:400px; width:500px">
 					<canvas id="check-in-chart" style="display: none; height:400px; width:400px"></canvas>
 					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
 				</div>
-				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:400px; width:400px">
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; height:400px; width:500px">
 					<canvas id="exit-ticket-chart" style="display: none; height:400px; width:400px"></canvas>
 					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
 				</div>
 			</div>
 			<div id="class-charts" style="display: flex; margin: auto;">
 				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; width:500px">
-					<canvas id="methods-chart" style="margin: auto; width:500px"></canvas>
+					<canvas id="methods-chart" style="margin: auto; width:400px"></canvas>
 					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
 				</div>   				
 				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; width:500px">
@@ -82,6 +83,7 @@
 					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
 				</div>   
 			</div>
+			<hr class="only-print" style="display: none; padding: 40px; border: 0px; height: 2px"/>
     		<div id="recent-check-in-list" align="center">
     			<h3>Recent Check-ins</h3>
 	       		<table id="recent-check-in-response-table">

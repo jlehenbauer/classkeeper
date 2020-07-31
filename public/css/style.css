@@ -25,31 +25,14 @@ html, body {
       margin: auto;
       padding: 20px;
       min-width: 80%;
-      max-width: 80%;
+      max-width: 90%;
       }
       form {
-      width: 100%;
+      max-width: 95%;
       padding: 20px;
       border-radius: 6px;
       background: #fff;
       box-shadow: 0 0 20px 0 #095484; 
-      }
-      .banner {
-      position: relative;
-      height: 210px;
-      background-image: url("/uploads/media/default/0001/01/c43630149befa5c9559813f72e99bcb6bf149e62.jpeg");  
-      background-size: cover;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      }
-      .banner::after {
-      content: "";
-      background-color: rgba(0, 0, 0, 0.5); 
-      position: absolute;
-      width: 100%;
-      height: 100%;
       }
       input, select, textarea {
       margin-bottom: 10px;
@@ -155,9 +138,8 @@ html, body {
                   padding: 0px;
             }
       }
-
       table#class-name-code-table{
-        display: inline-block; 
+        display: block; 
         float: left; 
         margin-right: 60px;
         border: 2px solid;
@@ -375,5 +357,8 @@ html, body {
       {
         .no-print {
           display: none !important;
+        }
+        .only-print{
+          display: block !important;
         }
       }

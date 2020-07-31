@@ -1403,6 +1403,9 @@ function updateRatingsChart(name){
           right: 30
         }
       },
+      legend: {
+        position: 'right'
+      },
       title: {
         display: true,
         text: "Exit Ticket Ratings",
