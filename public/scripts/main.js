@@ -227,7 +227,7 @@ function requestNotificationsPermissions() {
 
 // Add subscribed classes to list of choices
 async function displayClassLists(user) {
-  removeChildren(currentClass, 1);
+  removeChildren(currentClass, 0);
   
   let userData = await firebase.firestore().collection('users').doc(user.uid).get();
   let classCodes = userData.data().codes;
@@ -248,6 +248,13 @@ async function displayClassLists(user) {
   else {
     addClassModal("It appears you don't have any classes yet. Please enter your class code below:", userData.data().role);
   }
+
+  // When the process of creating the class lists is completed, 
+  // make them show in the classCodesModal
+  createClassCodes();
+  updateStudentDataSelectorList();
+  showRecentCheckIns();
+  showRecentExitTickets();
 }
 
 async function addClassModal(messageText, role=getUserRole()) {
@@ -314,6 +321,17 @@ async function addClass() {
   displayClassLists(user, 'check-in-current-class');
   return true;
   // TODO: clear the modal and class code elements from the modal
+}
+
+async function showClassCodeModal(){
+  let modal = classCodeModal;
+  modal.style.display = "block";
+  modal.style.zIndex = 2;
+  window.onclick = function(e) {
+    if (e.target == modal) {
+      modal.style.display = "none";
+    }
+  }
 }
 
 // Clear exit ticket
@@ -457,7 +475,17 @@ async function authStateObserver(user) {
 
     // If user is a teacher, show additional menu options
     if (await role == 'teacher') {
+      let menu = document.getElementById("menu-options");
+      if (!menu.contains(dataViewButton)){
+        console.log("No data view button, replacing...");
+        menu.insertBefore(dataViewButton, classCodeButton);
+      }
       dataViewButton.style.display = "";
+      changeToDataView();
+    }
+    else if (await role == 'student') {
+      dataViewButton.remove();
+      changeToCheckInView();
     }
 
     // Show user's profile and sign-out button.
@@ -561,8 +589,8 @@ function roleSignIn() {
   }
 }
 
-function closeRoleModal() {
-  roleModal.style.display = "none";
+function closeModal(modal) {
+  modal.style.display = "none";
 }
 
 function removeChildren(parent, numRemaining) {
@@ -574,11 +602,12 @@ function removeChildren(parent, numRemaining) {
   }
 }
 
-function showClassLists() {
+// This function creates and adds class codes to the class code modal content
+function createClassCodes() {
   // Current names and codes are contained within the dropdown options
   let htmlClassList = document.getElementById('current-class').children;
   let classListTable = document.getElementById('class-name-code-table');
-  for (let classItem of Array.from(htmlClassList).slice(1, htmlClassList.length)) {
+  for (let classItem of Array.from(htmlClassList).slice(0, htmlClassList.length)) {
     let newRow = classListTable.insertRow();
     newRow.align = "center";
     let cell = newRow.insertCell();
@@ -795,8 +824,12 @@ function buttonExitTicket() {
 }
 
 async function changeToDataView() {
+  if (await getUserRole() == 'student'){
+    signOut();
+    return false;
+  }
   if (document.getElementById('class-name-code-table').children[0].children.length == 1) {
-    showClassLists();
+    createClassCodes();
   }
   currentClass.addEventListener('change', function(item) {
     currentStudentNames = new Set();
@@ -812,9 +845,9 @@ async function changeToDataView() {
   checkInFormElement.setAttribute('hidden', true);
   dataContentView.removeAttribute('hidden');
 
+  updateStudentDataSelectorList();
   updateExitTicketChart(Array.from(currentStudentNames));
   updateCheckInChart(Array.from(currentStudentNames));
-  updateStudentDataSelectorList();
 }
 
 async function changeToCheckInView() {
@@ -914,11 +947,13 @@ var userFirstName = document.getElementById('check-in-first-name');
 
 // Modal Elements
 var modal = document.getElementById("confirmation");
-var modalClose = document.getElementsByClassName("close")[0];
+var modalClose = document.getElementsByClassName("close")[1];
 var roleModal = document.getElementById('role-modal');
 var role = ''
-var roleModalClose = document.getElementsByClassName("close")[1];
+var roleModalClose = document.getElementsByClassName("close")[2];
 var modalMessage = document.getElementById("modal-message");
+var classCodeModal = document.getElementById("class-code-modal");
+var classCodeModalClose = document.getElementsByClassName("close")[0];
 
 // Menu bar elements
 var homeButton = document.getElementById("menu-button-home");
@@ -926,11 +961,13 @@ var dataViewButton = document.getElementById("menu-button-data");
 var checkInViewButton = document.getElementById("menu-button-check-in");
 var addClassButton = document.getElementById("menu-button-add-class");
 var exitTicketViewButton = document.getElementById("menu-button-exit-ticket");
+var classCodeButton = document.getElementById("menu-button-show-class-codes");
 homeButton.addEventListener('click', menuBar);
 dataViewButton.addEventListener('click', buttonData);
 checkInViewButton.addEventListener('click', buttonCheckIn);
 addClassButton.addEventListener('click', function() {addClassModal('Please enter the code for your new class.')})
 exitTicketViewButton.addEventListener('click', buttonExitTicket);
+classCodeButton.addEventListener('click', showClassCodeModal);
 
 // Saves exit ticket on submission
 if (exitTicketFormElement) {
@@ -944,7 +981,8 @@ if (checkInFormElement) {
 
 // Add ability for modal 'x' to close modals
 modalClose.addEventListener('click', closeMessageModal);
-roleModalClose.addEventListener('click', closeRoleModal);
+roleModalClose.addEventListener('click', function() {closeModal(roleModal);});
+classCodeModalClose.addEventListener('click', function() {closeModal(classCodeModal);});
 
 // Saves message on form submit.
 signOutButtonElement.addEventListener('click', signOut);

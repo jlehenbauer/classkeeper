@@ -24,6 +24,7 @@
     	<a href="#" id="menu-button-check-in">Check-In</a>
     	<a href="#" id="menu-button-exit-ticket">Exit Ticket</a>
 		<a href="#" id="menu-button-data" style="display: none">Class Information</a>
+		<a href="#" id="menu-button-show-class-codes">Class Codes</a>
     	<a href="#" id="menu-button-add-class">Add Class</a>
     	<a href="#" onclick="signOut()">Log Out</a>
     	<!-- <a href="#about">About</a> -->
@@ -111,7 +112,7 @@
 
 	    <!-- Check-in Form View-->
 	    <div>
-		    <form action="#" id="check-in" onsubmit="return false">
+		    <form action="#" id="check-in" onsubmit="return false" hidden>
 		        <h1>Check-in</h1>
 		        <p>Welcome to class!</p>
 		        <h2>What is your first name?</h2>
@@ -379,14 +380,17 @@
 	</div>
 	
 	<!-- Class code modal -->
-	<div id="class-code-list" class="modal" hidden>
-		<h3>Class Codes</h3>
-		<table id="class-name-code-table">
-			<tr>
-				<th>Class name</th>
-				<th>Class code</th>
-			</tr>
-		   </table>
+	<div id="class-code-modal" class="modal" style="display: none">
+		<div class="modal-content class-code-modal-content">
+			<span class="close">&times;</span>
+			<h3>Class Codes</h3>
+			<table id="class-name-code-table">
+				<tr>
+					<th>Class name</th>
+					<th>Class code</th>
+				</tr>
+			</table>
+		</div>
 	</div>
 
     <!-- Message Modal -->

@@ -293,6 +293,11 @@ html, body {
         width: 50%;
       }
 
+      .class-code-modal-content{
+        width: 25%;
+        overflow-y: auto;
+      }
+
       /* The Close Button */
       .close {
         color: #aaaaaa;
