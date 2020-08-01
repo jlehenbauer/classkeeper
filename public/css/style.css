@@ -210,44 +210,44 @@ html, body {
       border: 3px solid #fff;
       }
       label.radio:after, label.check:after {
-      content: "";
-      position: absolute;
-      top: 6px;
-      width: 8px;
-      height: 4px;
-      background: transparent;
-      border-top: none;
-      border-right: none;
-      transform: rotate(-45deg);
-      opacity: 0;
+        content: "";
+        position: absolute;
+        top: 6px;
+        width: 8px;
+        height: 4px;
+        background: transparent;
+        border-top: none;
+        border-right: none;
+        transform: rotate(-45deg);
+        opacity: 0;
       }
       input[type=radio]:checked + label:after, input[type=checkbox]:checked + label:after {
-      opacity: 1;
+        opacity: 1;
       }
       .btn-block {
-      margin-top: 10px;
-      text-align: center;
+        margin-top: 10px;
+        text-align: center;
       }
       button {
-      width: 150px;
-      padding: 10px;
-      border: none;
-      border-radius: 5px; 
-      background: #095484;
-      font-size: 16px;
-      color: #fff;
-      cursor: pointer;
+        width: 150px;
+        padding: 10px;
+        border: none;
+        border-radius: 5px; 
+        background: #095484;
+        font-size: 16px;
+        color: #fff;
+        cursor: pointer;
       }
       button:hover {
-      background: #0666a3;
+        background: #0666a3; 
       }
       .profile-image{
-            width: 10em;
-            border-radius: 50%;
-            padding: 15px;
+        width: 10em;
+        border-radius: 50%;
+        padding: 15px;
       }
       #sign-in {
-            margin: 20px;
+        margin: 20px;
       }
       .sign-in-header{
         padding-top: 50px;

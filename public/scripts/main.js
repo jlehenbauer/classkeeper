@@ -252,14 +252,16 @@ async function displayClassLists(user) {
   // When the process of creating the class lists is completed, 
   // make them show in the classCodesModal
   createClassCodes();
-  updateStudentDataSelectorList();
-  showRecentCheckIns();
-  showRecentExitTickets();
+
+  if (await getUserRole() == 'teacher') {
+    updateStudentDataSelectorList();
+    showRecentCheckIns();
+    showRecentExitTickets();
+  }
 }
 
 async function addClassModal(messageText, role=getUserRole()) {
   modalMessage.innerHTML = messageText;
-  console.log("Changed modal inner html");
   let classCodeEntry = document.createElement('input');
   let classCodeConfirm = document.createElement('button');
   let modalMessageContent = document.getElementById('modal-message-content'); 
@@ -293,6 +295,7 @@ async function addClass() {
       firebase.firestore().collection('ccodes').doc(newClassCode).set({
         name: document.getElementById('new-class-name').value
       })
+      dbCode = await firebase.firestore().collection('ccodes').doc(newClassCode).get();
     }
     // If it did, report that to the user and ask to try again.
     else {
@@ -302,19 +305,28 @@ async function addClass() {
       return false;
     }
   }
-  // Whether the user is a student or teacher, now add the code to their user record
-  console.log(newClassCode);
-  let updatedClassCodes = userData.data().codes;
-  if (!updatedClassCodes.includes(newClassCode)) {
-    updatedClassCodes.push(newClassCode);
-    console.log(updatedClassCodes);
-    firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).update({
-      codes: updatedClassCodes
-    }).then(function() {
-      console.log('User class list updated successfully: ' + updatedClassCodes);
-    }).catch(function(error) {
-      console.log('Error updating class list: ' + error);
-    });
+  // Whether the user is a student or teacher
+  // AND THE CODE EXISTS, now add the code to their user record,
+  // else, report no code exists
+  if (dbCode.data() == undefined){
+      // Report no such class code
+      closeMessageModal();
+      notifyWithModal("Sorry, that code doesn't exist. Please try again.");
+      return false;
+  }
+  else{
+    let updatedClassCodes = userData.data().codes;
+    if (!updatedClassCodes.includes(newClassCode)) {
+      updatedClassCodes.push(newClassCode);
+      console.log(updatedClassCodes);
+      firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).update({
+        codes: updatedClassCodes
+      }).then(function() {
+        console.log('User class list updated successfully: ' + updatedClassCodes);
+      }).catch(function(error) {
+        console.log('Error updating class list: ' + error);
+      });
+    }
   }
   closeMessageModal();
 
@@ -824,10 +836,6 @@ function buttonExitTicket() {
 }
 
 async function changeToDataView() {
-  if (await getUserRole() == 'student'){
-    signOut();
-    return false;
-  }
   if (document.getElementById('class-name-code-table').children[0].children.length == 1) {
     createClassCodes();
   }
@@ -885,7 +893,7 @@ function menuBar() {
     display_header.style= "padding-top: 50px";
   } else {
     menu_display.style.display = "block";
-    display_header.style= "padding-top: 300px";
+    display_header.style= "padding-top: 360px";
     console.log(menu_display.style.height);
   }
 }
@@ -1115,7 +1123,8 @@ function updateExitTicketChart(names, dates) {
             max: 10
           }
         }]
-      }
+      },
+      aspectRatio: 1
     }
   });
   
@@ -1178,7 +1187,8 @@ function updateCheckInChart(names, dates) {
             max: 10
           }
         }]
-      }
+      },
+      aspectRatio: 1
     }
   });
   
