@@ -6,7 +6,7 @@ service cloud.firestore {
     //  - Anyone can read exit tickets
     //  - Anyone with a valid request may create an exit ticket
     match /exit-tickets/{messageId} {
-      allow read;
+      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "teacher";
       allow create: if request.auth != null
                     && request.resource.data.name == request.auth.token.name;
       allow update, delete: if false;
@@ -15,7 +15,7 @@ service cloud.firestore {
     //  - Anyone can read check-in
     //  - Anyone with a valid request may create a check-in
     match /check-ins/{messageId} {
-      allow read;
+      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "teacher";
       allow create: if request.auth != null
                     && request.resource.data.name == request.auth.token.name;
       allow update, delete: if false;
@@ -25,7 +25,9 @@ service cloud.firestore {
     //  - Users can only update themselves
     //  - TODO: phase out FCM Tokens and incorporate with User
     match /users/{uid} {
-      allow read, create, update;
+      allow read: if request.auth.uid == uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "teacher";
+      allow create;
+      allow update: if request.resource.data.role == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
       //allow create: if request.auth != null
       //              && request.resource.data.name == request.auth.token.name;
       //allow update: if request.auth != null
@@ -33,8 +35,8 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /ccodes/{classCode} {
-      allow read, create, update;
-      allow delete: if false;
+      allow read, create;
+      allow update, delete: if false;
     }
     // FCM Tokens:
     //   - Anyone can write their token.
