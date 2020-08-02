@@ -353,6 +353,14 @@ html, body {
         color: #095484;
       }
 
+      .footer {
+        text-align: center;
+      }
+
+      .footer a {
+        color: #555555;
+      }
+
       /* Style the active link (or home/logo) */
       .active {
         background-color: #096084;
