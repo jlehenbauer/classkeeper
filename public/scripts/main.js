@@ -1074,6 +1074,7 @@ function processRatingsData(desiredNames, allRatings, allDates) {
           y: theseRatings[i]
         });
       }
+      ratingData.get(name).sort((a, b) => (a.t > b.t) ? 1 : -1);
     }
   });
   return ratingData;
