@@ -670,11 +670,11 @@ async function showRecentCheckIns() {
       }
       try {
         let dates = checkInDates.get(name);
-        dates.push(formattedDate);
+        dates.push(moment(formattedDate, "MM/DD/YYYY"));
         checkInDates.set(name, dates);
       }
       catch(err){
-        checkInDates.set(name, [formattedDate])
+        checkInDates.set(name, [moment(formattedDate, "MM/DD/YYYY")])
       }
     })
     
@@ -687,7 +687,6 @@ async function showRecentCheckIns() {
     else{
       checkInChartElement.style.display = 'none';
     }
-
   });
   return true;
 }
@@ -744,11 +743,11 @@ async function showRecentExitTickets() {
       }
       try {
         let dates = exitTicketDates.get(name);
-        dates.push(formattedDate);
+        dates.push(moment(formattedDate, "MM/DD/YYYY"));
         exitTicketDates.set(name, dates);
       }
       catch(err){
-        exitTicketDates.set(name, [formattedDate])
+        exitTicketDates.set(name, [moment(formattedDate, "MM/DD/YYYY")])
       }
       try {
         // TODO: Create methods aggregation
@@ -1024,13 +1023,12 @@ studentSelector.addEventListener('change', studentDataSelectorListener)
 function getRandomColor(alpha) {
   var color = 'rgba(';
   for (var i = 0; i < 3; i++ ) {
-      color += String(Math.floor(Math.random() * 255)) + ",";
+    color += String(Math.floor(Math.random() * 255)) + ",";
   }
   if (alpha == undefined) {
     alpha = 1;
   }
   color += alpha + ")";
-  console.log(color);
   return color;
 }
 
@@ -1048,26 +1046,34 @@ function setPerStudentColors() {
 /**
  * TODO:
  * 
- *  - add 'ratings by method' chart
- *  - make colors consistent per student for checkin/exit
- *  - add 'ratings totals' chart
  *  - option for time frame?
  */
 
-function generateRatingData(dates, names, currentRatings, currentDates) {
+
+ /**
+  * 
+  * @param {Array} names            A list of names to be displayed
+  * @param {Map} currentRatings     A Map with keys of names and values of Arrays of ratings
+  * @param {Map} currentDates       A may with keys of names and values of Arrays of dates
+  * @return {Array} ratingData      An array with data at the appropriate date intervals and null elsewhere
+  */
+function processRatingsData(desiredNames, allRatings, allDates) {
   let ratingData = new Map();
-  currentDates.forEach( function(value, key, map) {
-    if (names.includes(key) || names[0] == 'all-students') {
-      ratingData.set(key, []);
-      dates.forEach( function(date) {
-        let ind = currentDates.get(key).indexOf(date);
-        if (value.indexOf(date) !== null){
-          ratingData.get(key).push(currentRatings.get(key)[ind]);
-        }
-        else{
-          ratingData.get(key).push(null);
-        };
-      });
+  if (desiredNames[0] == 'all-students') {
+    desiredNames = currentStudentNames;
+  }
+  desiredNames.forEach( function(name) {
+    ratingData.set(name, []);
+    let theseRatings = allRatings.get(name);
+    let theseDates = allDates.get(name);
+    if (theseRatings !== undefined || theseDates !== undefined) {
+      for (var i = 0; i < theseRatings.length; i++){
+        let currData = ratingData.get(name);
+        currData.push({
+          t: theseDates[i],
+          y: theseRatings[i]
+        });
+      }
     }
   });
   return ratingData;
@@ -1086,11 +1092,11 @@ function removeCurrentData(chart){
 
 function updateExitTicketChart(names, dates) {
 
-  // Create names and Dates lists
+  // Create dates list
   if (dates == undefined) {
     dates = new Set();
     exitTicketDates.forEach( function(value, key, map){
-      value.forEach(function(val){dates.add(val)});
+      value.forEach(function(val){dates.add(moment(val, "MM/DD/YYYY"))});
     });
   }
 
@@ -1113,8 +1119,12 @@ function updateExitTicketChart(names, dates) {
       },
       scales: {
         xAxes: [{
-          ticks: {
-            reverse: true
+          type: 'time',
+          time: {
+            minUnit: 'day',
+            displayFormats: {
+              day: "MMM DD"
+            }
           }
         }],
         yAxes: [{
@@ -1124,12 +1134,17 @@ function updateExitTicketChart(names, dates) {
           }
         }]
       },
+      elements: {
+        line: {
+          tension: 0
+        }
+      },
       aspectRatio: 1
     }
   });
   
   // Create per-student ratings data to populate chart
-  let ratings = generateRatingData(dates, names, exitTicketRatings, exitTicketDates);
+  let ratings = processRatingsData(names, exitTicketRatings, exitTicketDates);
 
   // Fill chart with data for each student with assigned colors
   ratings.forEach( function (value, key, map) {
@@ -1154,9 +1169,10 @@ function updateCheckInChart(names, dates) {
   if (dates == undefined) {
     dates = new Set();
     checkInDates.forEach( function(value, key, map){
-      value.forEach(function(val){dates.add(val)});
+      value.forEach(function(val){dates.add(moment(val, "MM/DD/YYYY"))});
     });
   }
+
 
   // Create blank chart with appropriate dates as labels
   checkInChart = new Chart(checkInChartElement, {
@@ -1177,8 +1193,12 @@ function updateCheckInChart(names, dates) {
       },
       scales: {
         xAxes: [{
-          ticks: {
-            reverse: true
+          type: 'time',
+          time: {
+            minUnit: 'day',
+            displayFormats: {
+              day: "MMM DD"
+            }
           }
         }],
         yAxes: [{
@@ -1188,12 +1208,17 @@ function updateCheckInChart(names, dates) {
           }
         }]
       },
+      elements: {
+        line: {
+          tension: 0
+        }
+      },
       aspectRatio: 1
     }
   });
   
   // Create per-student ratings data to populate chart
-  let ratings = generateRatingData(dates, names, checkInRatings, checkInDates);
+  let ratings = processRatingsData(names, checkInRatings, checkInDates);
 
   // Fill chart with data for each student with random colors
   ratings.forEach( function (value, key, map) {
@@ -1387,35 +1412,25 @@ function updateRatingsChart(name){
 
   let ratings = exitTicketRatings.get(name);
   let ratingCounts = [];
-  let colors = [];
+  let colors = ['#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ffff', '#0000ff', '#7f00ff', '#ff007f', '#00ff80', '#ff00ff'];
 
   removeCurrentData(ratingsChart);
 
-  if (name == "all-students") {
+  if (name == "all-students" || ratings == undefined) {
     ratingsChart.options.title.text = "Select a student to see data";
-    ratingCounts = [0];
+    ratingsChart.data.datasets = [{
+      backgroundColor: 'rgb(192, 192, 192, .7)',
+      data: 1
+    }]
     ratingsChart.update();
     return false;
   }
-  else if (ratings == undefined) {
-    ratingsChart.data.labels = ["No Responses"];
-    ratingCounts = [0];
-    ratingsChart.update();
-    return false;
-  }
-
 
   for(var i = 1; i < 11; i++){
     let num = ratings.reduce((total,x) => (x == i ? total + 1 : total), 0);
     ratingCounts.push(num);
-    colors.push(getRandomColor());
   }
 
-  console.log(exitTicketRatings);
-  console.log(ratings);
-  console.log(ratingCounts);
-  console.log(colors);
-  
   var options = {
     tooltipTemplate: "<%= value %>",
   
