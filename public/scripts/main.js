@@ -809,7 +809,7 @@ function createDefaultStudentMethodMap() {
 }
 
 function updateStudentDataSelectorList(){
-  if (exitTicketRatings.size > 0){
+  if (exitTicketRatings.size > 0 || checkInRatings.size > 0){
     let studentSelectorList = document.getElementById('student-selector-list');
     removeAllChildren(studentSelectorList);
     
@@ -859,12 +859,17 @@ async function changeToDataView() {
   currentClass.addEventListener('change', function(item) {
     currentStudentNames = new Set();
     exitTicketDates = new Map();
+    exitTicketRatings = new Map();
     checkInDates = new Map();
+    checkInRatings = new Map();
+    exitTicketMethodRatings = new Map();
     updateStudentDataSelectorList();
     showRecentCheckIns();
     showRecentExitTickets();
     updateExitTicketChart(Array.from(currentStudentNames));
     updateCheckInChart(Array.from(currentStudentNames));
+    updateMethodsChart();
+    updateRatingsChart();
   });
   exitTicketFormElement.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
@@ -1087,10 +1092,12 @@ function processRatingsData(desiredNames, allRatings, allDates) {
     if (theseRatings !== undefined || theseDates !== undefined) {
       for (var i = 0; i < theseRatings.length; i++){
         let currData = ratingData.get(name);
-        currData.push({
-          t: theseDates[i],
-          y: theseRatings[i]
-        });
+        if (currData !== undefined) {
+          currData.push({
+            t: theseDates[i],
+            y: theseRatings[i]
+          });
+        }
       }
       ratingData.get(name).sort((a, b) => (a.t > b.t) ? 1 : -1);
     }
@@ -1118,6 +1125,8 @@ function updateExitTicketChart(names, dates) {
       value.forEach(function(val){dates.add(moment(val, "MM/DD/YYYY"))});
     });
   }
+
+  removeCurrentData(exitTicketChart);
 
   // Create blank chart with appropriate dates as labels
   exitTicketChart = new Chart(exitTicketChartElement, {
@@ -1192,6 +1201,8 @@ function updateCheckInChart(names, dates) {
     });
   }
 
+  removeCurrentData(checkInChart);
+
 
   // Create blank chart with appropriate dates as labels
   checkInChart = new Chart(checkInChartElement, {
@@ -1259,13 +1270,17 @@ function updateCheckInChart(names, dates) {
 function updateMethodsChart(name) {
     // Create chart with appropriate methods as labels
 
+    console.log(name);
     let averages = new Map();
     let frequencies = new Map();
     let studentRatings = exitTicketMethodRatings.get(name);
 
     removeCurrentData(methodsChart);
 
-    if (name == "all-students") {
+    if ((name == "all-students" || studentRatings == undefined) && ratingsChart == undefined) {
+      return false;
+    }
+    else if (name == "all-students") {
       methodsChart.options.title.text = "Select a student to see data";
       averages = [0];
       methodsChart.update();
@@ -1435,7 +1450,10 @@ function updateRatingsChart(name){
 
   removeCurrentData(ratingsChart);
 
-  if (name == "all-students" || ratings == undefined) {
+  if ((name == "all-students" || ratings == undefined) && ratingsChart == undefined) {
+    return false;
+  }
+  else if (name == "all-students" || ratings == undefined) {
     ratingsChart.options.title.text = "Select a student to see data";
     ratingsChart.data.datasets = [{
       backgroundColor: 'rgb(192, 192, 192, .7)',
