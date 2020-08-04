@@ -15,6 +15,24 @@
  */
 'use strict';
 
+/**
+ * TODO
+ * ----
+ * - Make "remove class" option
+ * - Reconfigure to not have to refresh on signing in for the first time
+ * - Solidify usages for student/teacher
+ * - Research new usability improvements
+ * - Add check-out
+ * - Data consolidation and readability
+ * 
+ * 
+ * Optional:
+ * - Add co-teachers
+ * - Improve on mobile
+ * - Improve layout/formatting
+ * 
+ */
+
 // Signs-in Class Keeper
 async function signIn(googleUser) {
   // Sign in Firebase using popup auth and Google as the identity provider.
