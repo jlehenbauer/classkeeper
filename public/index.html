@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">	
     <script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
 
+	<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+	<script src='scripts/node_modules/moment/moment.js'></script>
+
   </head>
 
   <!-- Top Navigation Menu -->
@@ -20,8 +23,9 @@
     <!-- Navigation links (hidden by default) -->
     <div id="menu-options" style="display: none">
     	<a href="#" id="menu-button-check-in">Check-In</a>
-    	<a href="#" id="menu-button-exit-ticket" style="display: none">Exit Ticket</a>
-    	<a href="#" id="menu-button-data" style="display: none">Class Information</a>
+    	<a href="#" id="menu-button-exit-ticket">Exit Ticket</a>
+		<a href="#" id="menu-button-data" style="display: none">Class Information</a>
+		<a href="#" id="menu-button-show-class-codes">Class Codes</a>
     	<a href="#" id="menu-button-add-class">Add Class</a>
     	<a href="#" onclick="signOut()">Log Out</a>
     	<!-- <a href="#about">About</a> -->
@@ -33,7 +37,7 @@
   </div>
 
   <body>
-    <div class="sign-in-header" align="center">
+    <div class="sign-in-header no-print" align="center">
         <div class="sign-in-buttons" style="display: inline-block">
         	<button id="sign-in" hidden>Sign in</button>
         	<button id="sign-in-teacher" hidden>Teacher Sign Up</button>
@@ -45,7 +49,8 @@
 
     <div class="testbox" id="page-content" style="display: block">
         <div class="question" id="class-list" name="class-list" align="center" style="padding-bottom: 20px" hidden>
-            <h2>Please select your class:<span class="required">*</span></h2>
+			<hr class="only-print" style="display: none; padding: 20px; border: 0px; height: 2px"/>
+			<h2>Class:<span class="required no-print">*</span></h2>
             <div class="question-answer">
                 <select id="current-class">
                 <option class="disabled" value="" disabled selected></option>Please Select</option>
@@ -54,15 +59,33 @@
         </div>
 
     	<div id="data-content" hidden>
-    		<div id="class-code-list">
-    			<h3>Class Codes</h3>
-	    		<table id="class-name-code-table">
-	    			<tr>
-	    				<th>Class name</th>
-	    				<th>Class code</th>
-	    			</tr>
-	       		</table>
-	       	</div>
+			<div align="center">
+				<h2>Student info</h2>
+				<select id="student-selector-list">
+					<option class="disabled" value="" disabled selected></option>Please select a student</option>
+				</select>
+			</div>
+			<div id="class-charts" style="display: flex; margin: auto; height: 100%">
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; width:500px">
+					<canvas id="check-in-chart" style="display: none; height:400px; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; width:500px">
+					<canvas id="exit-ticket-chart" style="display: none; height:400px; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>
+			</div>
+			<div id="class-charts" style="display: flex; margin: auto;">
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; width:500px">
+					<canvas id="methods-chart" style="margin: auto; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>   				
+				<div class="chart-container" style="padding: 15px; margin: auto; position: relative; width:500px">
+					<canvas id="ratings-chart" style="margin: auto; width:400px"></canvas>
+					<script src='scripts/node_modules/chart.js/dist/Chart.min.js'></script>
+				</div>   
+			</div>
+			<hr class="only-print" style="display: none; padding: 40px; border: 0px; height: 2px"/>
     		<div id="recent-check-in-list" align="center">
     			<h3>Recent Check-ins</h3>
 	       		<table id="recent-check-in-response-table">
@@ -73,11 +96,24 @@
 	    			</tr>
 	       		</table>
 	       	</div>
+			<div id="recent-exit-ticket-list" align="center">
+				<h3>Recent Exit Tickets</h3>
+					<table id="recent-exit-ticket-response-table">
+					<tr>
+						<th>Student</th>
+						<th>Topic</th>
+						<th>Rating</th>
+						<th>Date and Time</th>
+						<th>Question</th>
+						<th>Methods</th>
+					</tr>
+				</table>
+			</div>
     	</div>	
 
 	    <!-- Check-in Form View-->
 	    <div>
-		    <form action="#" id="check-in" onsubmit="return false">
+		    <form action="#" id="check-in" onsubmit="return false" hidden>
 		        <h1>Check-in</h1>
 		        <p>Welcome to class!</p>
 		        <h2>What is your first name?</h2>
@@ -341,8 +377,26 @@
 		        </div>
 		    </form>
 		</div>
+	</div>
+	
+	<div class="footer">
+		<a href="terms-of-service.html">Terms of service</a> | <a href="https://jacoblehenbauer.com/#contact">Support</a>
+	</div>
 
-    </div>
+	
+	<!-- Class code modal -->
+	<div id="class-code-modal" class="modal" style="display: none">
+		<div class="modal-content class-code-modal-content">
+			<span class="close">&times;</span>
+			<h3>Class Codes</h3>
+			<table id="class-name-code-table">
+				<tr>
+					<th>Class name</th>
+					<th>Class code</th>
+				</tr>
+			</table>
+		</div>
+	</div>
 
     <!-- Message Modal -->
     <div id="confirmation" class="modal">
@@ -367,8 +421,7 @@
             <button id="role-student-button" style="margin: 1.5em">Student</button>
           </div>
       </div>
-    </div>
-
+	</div>
   </body>
 
 <!-- Import and configure the Firebase SDK -->

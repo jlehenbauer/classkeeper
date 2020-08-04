@@ -95,10 +95,11 @@ async function getUserRole() {
 }
 
 // Saves a new message on the Firebase DB.
-function saveExitTicket(entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
+function saveExitTicket(currentClass, entryTopic, entryMethod, entryLocation, entryRating, entryQuestion) {
   // Add a new message entry into the database.
   console.log('Attempting to add to messages database')
   return firebase.firestore().collection('exit-tickets').add({
+    classCode: currentClass,
     name: getUserName(),
     email: getEmail(),
     profile_img: getProfilePicUrl(),
@@ -244,7 +245,7 @@ function requestNotificationsPermissions() {
 
 // Add subscribed classes to list of choices
 async function displayClassLists(user) {
-  removeChildren(currentClass, 1);
+  removeChildren(currentClass, 0);
   
   let userData = await firebase.firestore().collection('users').doc(user.uid).get();
   let classCodes = userData.data().codes;
@@ -265,11 +266,20 @@ async function displayClassLists(user) {
   else {
     addClassModal("It appears you don't have any classes yet. Please enter your class code below:", userData.data().role);
   }
+
+  // When the process of creating the class lists is completed, 
+  // make them show in the classCodesModal
+  createClassCodes();
+
+  if (await getUserRole() == 'teacher') {
+    updateStudentDataSelectorList();
+    showRecentCheckIns();
+    showRecentExitTickets();
+  }
 }
 
 async function addClassModal(messageText, role=getUserRole()) {
   modalMessage.innerHTML = messageText;
-  console.log("Changed modal inner html");
   let classCodeEntry = document.createElement('input');
   let classCodeConfirm = document.createElement('button');
   let modalMessageContent = document.getElementById('modal-message-content'); 
@@ -303,6 +313,7 @@ async function addClass() {
       firebase.firestore().collection('ccodes').doc(newClassCode).set({
         name: document.getElementById('new-class-name').value
       })
+      dbCode = await firebase.firestore().collection('ccodes').doc(newClassCode).get();
     }
     // If it did, report that to the user and ask to try again.
     else {
@@ -312,26 +323,45 @@ async function addClass() {
       return false;
     }
   }
-  // Whether the user is a student or teacher, now add the code to their user record
-  console.log(newClassCode);
-  let updatedClassCodes = userData.data().codes;
-  if (!updatedClassCodes.includes(newClassCode)) {
-    updatedClassCodes.push(newClassCode);
-    console.log(updatedClassCodes);
-    firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).update({
-      codes: updatedClassCodes
-    }).then(function() {
-      console.log('User class list updated successfully: ' + updatedClassCodes);
-    }).catch(function(error) {
-      console.log('Error updating class list: ' + error);
-    });
+  // Whether the user is a student or teacher
+  // AND THE CODE EXISTS, now add the code to their user record,
+  // else, report no code exists
+  if (dbCode.data() == undefined){
+      // Report no such class code
+      closeMessageModal();
+      notifyWithModal("Sorry, that code doesn't exist. Please try again.");
+      return false;
+  }
+  else{
+    let updatedClassCodes = userData.data().codes;
+    if (!updatedClassCodes.includes(newClassCode)) {
+      updatedClassCodes.push(newClassCode);
+      console.log(updatedClassCodes);
+      firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).update({
+        codes: updatedClassCodes
+      }).then(function() {
+        console.log('User class list updated successfully: ' + updatedClassCodes);
+      }).catch(function(error) {
+        console.log('Error updating class list: ' + error);
+      });
+    }
   }
   closeMessageModal();
 
   displayClassLists(user, 'check-in-current-class');
-  location.reload(true);
   return true;
   // TODO: clear the modal and class code elements from the modal
+}
+
+async function showClassCodeModal(){
+  let modal = classCodeModal;
+  modal.style.display = "block";
+  modal.style.zIndex = 2;
+  window.onclick = function(e) {
+    if (e.target == modal) {
+      modal.style.display = "none";
+    }
+  }
 }
 
 // Clear exit ticket
@@ -342,9 +372,8 @@ function clearExitTicket(){
   }
   exitTicketFormElement.elements["exit_rating"][rating - 1].checked = false;
   exitTopic.value = '';
-  exitLocation = '';
-  exitQuestion = '';
-
+  exitLocation.value = '';
+  exitQuestion.value = '';
 }
 
 // Custom check-in
@@ -378,7 +407,7 @@ function onMediaFileSelected(event) {
   }
 }
 
-// Class Keeper: Triggered when the send new message form is submitted.
+// Class Keeper: Triggered when the send new exit ticket is submitted.
 function onExitTicketFormSubmit() {
   //e.preventDefault();
   let rating = exitTicketFormElement.elements["exit_rating"].value;
@@ -388,21 +417,28 @@ function onExitTicketFormSubmit() {
   console.log(exitLocation.value);
   console.log(rating);
   console.log(exitQuestion.value);
-  console.log(true == (exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()))
+  console.log(currentClass.value);
+  console.log(true == (currentClass.value && exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()))
   // ^ Check that the user entered a message and is signed in.
+  if (currentClass.value == undefined) {
+    notifyWithModal("Please select a class at the top of the page!");
+    return false;
+  }
   if (exitTopic.value && getCheckedMethods() && exitLocation.value && rating && checkSignedInWithMessage()) {
-    saveExitTicket(exitTopic.value, getCheckedMethods(), exitLocation.value, rating, exitQuestion.value).then(function() {
+    saveExitTicket(currentClass.value, exitTopic.value, getCheckedMethods(), exitLocation.value, rating, exitQuestion.value).then(function() {
       // Clear message text field and re-enable the SEND button.
       //resetMaterialTextfield(messageInputElement);
       //toggleButton();
       clearExitTicket();
       notifyWithModal("Thank you for submitting your exit ticket!");
     });
+    return true;
   }
+  notifyWithModal("Make sure you've filled out everything before you submit!");
   return false;
 }
 
-// Class Keeper: Triggered when the send check-in is submitted.
+// Class Keeper: Triggered when the check-in is submitted.
 function onCheckInSubmit() {
   //e.preventDefault();
   var rating = checkInFormElement.elements["rating"].value;
@@ -413,6 +449,10 @@ function onCheckInSubmit() {
   console.log(currentClass.value)
   console.log(true == (rating && checkSignedInWithMessage()));
   // ^ Check that the user entered a message and is signed in.
+  if (currentClass.value == undefined) {
+    notifyWithModal("Please select a class at the top of the page!");
+    return false;
+  }
   if (currentClass.value && rating && checkSignedInWithMessage()) {
     saveCheckIn(rating, pleaseKnow.value, contentQuestion.value, currentClass.value).then(function() {
       // Clear message text field and re-enable the SEND button.
@@ -421,7 +461,9 @@ function onCheckInSubmit() {
       clearCheckInForm();
       notifyWithModal("Thank you for submitting your check-in, have a great day!");
     });
+    return true;
   }
+  notifyWithModal("Make sure you've filled out everything before you submit!");
   return false;
 }
 
@@ -463,7 +505,17 @@ async function authStateObserver(user) {
 
     // If user is a teacher, show additional menu options
     if (await role == 'teacher') {
+      let menu = document.getElementById("menu-options");
+      if (!menu.contains(dataViewButton)){
+        console.log("No data view button, replacing...");
+        menu.insertBefore(dataViewButton, classCodeButton);
+      }
       dataViewButton.style.display = "";
+      changeToDataView();
+    }
+    else if (await role == 'student') {
+      dataViewButton.remove();
+      changeToCheckInView();
     }
 
     // Show user's profile and sign-out button.
@@ -482,10 +534,10 @@ async function authStateObserver(user) {
     classList.setAttribute('hidden', 'true');
 
     // Show role modal
-    roleSignIn();
+    roleSignIn(); 
 
     // Show sign-in button.
-    signInButtonElement.removeAttribute('hidden');
+    signInButtonElement.removeAttribute('hidden');  
   }
 }
 
@@ -544,6 +596,7 @@ function getCheckedMethods() {
 function notifyWithModal(message) {
   modalMessage.innerHTML = message;
   modal.style.display = "block";
+  modal.style.zIndex = 2;
   window.onclick = function(e) {
     if (e.target == modal) {
       modal.style.display = "none";
@@ -566,8 +619,8 @@ function roleSignIn() {
   }
 }
 
-function closeRoleModal() {
-  roleModal.style.display = "none";
+function closeModal(modal) {
+  modal.style.display = "none";
 }
 
 function removeChildren(parent, numRemaining) {
@@ -579,11 +632,12 @@ function removeChildren(parent, numRemaining) {
   }
 }
 
-function showClassLists() {
+// This function creates and adds class codes to the class code modal content
+function createClassCodes() {
   // Current names and codes are contained within the dropdown options
   let htmlClassList = document.getElementById('current-class').children;
   let classListTable = document.getElementById('class-name-code-table');
-  for (let classItem of Array.from(htmlClassList).slice(1, htmlClassList.length)) {
+  for (let classItem of Array.from(htmlClassList).slice(0, htmlClassList.length)) {
     let newRow = classListTable.insertRow();
     newRow.align = "center";
     let cell = newRow.insertCell();
@@ -600,21 +654,187 @@ async function showRecentCheckIns() {
   let checkInResponseTable = document.getElementById('recent-check-in-response-table');
   removeChildren(checkInResponseTable.children[0], 1);
   console.log(htmlCurrentClass);
+
   let checkInCollection = firebase.firestore().collection('check-ins');
   let recentCheckIns = checkInCollection.where("classCode", "==", htmlCurrentClass).orderBy("timestamp", "desc").get().then(function(querySnapshot) {
-    querySnapshot.forEach(function(doc) {
+    querySnapshot.forEach( function(doc) {
+      let name = doc.data().name;
+      let rating = doc.data().feeling;
+      let date = doc.data().timestamp.toDate();
+      let formattedDate = date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear();
+      
       let newRow = checkInResponseTable.insertRow();
       newRow.align = "center";
       let cell = newRow.insertCell();
-      cell.appendChild(document.createTextNode(doc.data().name));
+      cell.appendChild(document.createTextNode(name));
       cell = newRow.insertCell();
-      cell.appendChild(document.createTextNode(doc.data().feeling));
+      cell.appendChild(document.createTextNode(rating));
       cell = newRow.insertCell();
-      let date = doc.data().timestamp.toDate();
-      cell.appendChild(document.createTextNode(date.getMonth() + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
+      cell.appendChild(document.createTextNode((date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
+    
+      // Maintain list of all students in class
+      if (!currentStudentNames.has(name)){
+        currentStudentNames.add(name);
+      }
+
+      // Push data to variables for charts
+      try {
+        let ratings = checkInRatings.get(name);
+        ratings.push(rating);
+        checkInRatings.set(name, ratings);
+      }
+      catch(err){
+        checkInRatings.set(name, [rating]);
+      }
+      try {
+        let dates = checkInDates.get(name);
+        dates.push(moment(formattedDate, "MM/DD/YYYY"));
+        checkInDates.set(name, dates);
+      }
+      catch(err){
+        checkInDates.set(name, [moment(formattedDate, "MM/DD/YYYY")])
+      }
     })
+    
+    if (currentStudentNames.size > 0) {
+      setPerStudentColors();
+      updateCheckInChart(Array.from(currentStudentNames));
+      updateStudentDataSelectorList();
+      checkInChartElement.style.display = 'inline-block';
+    }
+    else{
+      checkInChartElement.style.display = 'none';
+    }
   });
   return true;
+}
+
+async function showRecentExitTickets() {
+  // Current names and codes are contained within the dropdown options
+  let htmlCurrentClass = document.getElementById('current-class').value;
+  let exitTicketResponseTable = document.getElementById('recent-exit-ticket-response-table');
+  removeChildren(exitTicketResponseTable.children[0], 1);
+
+  console.log("writing exit ticket data");
+  let exitTicketCollection = firebase.firestore().collection('exit-tickets');
+  let recentExitTickets = exitTicketCollection.where("classCode", "==", htmlCurrentClass).orderBy("timestamp", "desc").get().then(function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+      numVals += 1;
+      // Name all this to make it easier to handle
+      let name = doc.data().name;
+      let topic = doc.data().topic;
+      let rating = doc.data().rating;
+      let date = doc.data().timestamp.toDate();
+      let formattedDate = date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear();
+      let question = doc.data().question;
+      let methods = doc.data().methods;
+
+      // Fill the data table with another row for the new document
+      let newRow = exitTicketResponseTable.insertRow();
+      newRow.align = "center";
+      let cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(name));
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(topic));
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(rating));
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode((date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + (date.getMinutes()<10?'0':'') + date.getMinutes()));
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(question));
+      cell = newRow.insertCell();
+      cell.appendChild(document.createTextNode(methods));
+
+      // Maintain list of all students in class
+      if (!currentStudentNames.has(name)){
+        currentStudentNames.add(name);
+      }
+
+      // Push data to variables for charts
+      try {
+        let ratings = exitTicketRatings.get(name);
+        ratings.push(rating);
+        exitTicketRatings.set(name, ratings);
+      }
+      catch(err){
+        exitTicketRatings.set(name, [rating]);
+      }
+      try {
+        let dates = exitTicketDates.get(name);
+        dates.push(moment(formattedDate, "MM/DD/YYYY"));
+        exitTicketDates.set(name, dates);
+      }
+      catch(err){
+        exitTicketDates.set(name, [moment(formattedDate, "MM/DD/YYYY")])
+      }
+      try {
+        // TODO: Create methods aggregation
+        methods.forEach(function(method) {
+          let currentRatings = exitTicketMethodRatings.get(name).get(method);
+          currentRatings.push(rating);
+          exitTicketMethodRatings.get(name).set(method, currentRatings);
+        });
+      }
+      catch {
+        let newMethodMap = createDefaultStudentMethodMap();
+        exitTicketMethodRatings.set(name, newMethodMap)
+        methods.forEach(function(method) {
+          let currentRatings = exitTicketMethodRatings.get(name).get(method);
+          currentRatings.push(rating);
+          exitTicketMethodRatings.get(name).set(method, currentRatings);
+        });
+      }
+    })
+
+    if (currentStudentNames.size > 0) {
+      setPerStudentColors();
+      updateExitTicketChart(Array.from(currentStudentNames));
+      updateStudentDataSelectorList();
+      exitTicketChartElement.style.display = 'inline-block';
+    }
+    else{
+      exitTicketChartElement.style.display = 'none';
+    }
+    
+  });
+  return true;
+}
+
+function createDefaultStudentMethodMap() {
+  let methodsMap = new Map();
+  exitTicketMethodsList.forEach(function(method){
+    methodsMap.set(method, []);
+  });
+  return methodsMap;
+}
+
+function updateStudentDataSelectorList(){
+  if (exitTicketRatings.size > 0){
+    let studentSelectorList = document.getElementById('student-selector-list');
+    removeAllChildren(studentSelectorList);
+    
+    let allStudents = document.createElement('option');
+    allStudents.id = "all-students";
+    allStudents.value = "all-students";
+    allStudents.innerHTML = "All students";
+    studentSelectorList.appendChild(allStudents);
+
+    Array.from(currentStudentNames).forEach( function(name) {
+      var newStudent = document.createElement('option');
+      newStudent.id = name;
+      newStudent.value = name;
+      newStudent.innerHTML = name;
+      studentSelectorList.appendChild(newStudent);
+    });
+    return true;
+  }
+  return false;
+}
+
+function removeAllChildren(parent) {
+  while (parent.firstChild) {
+    parent.removeChild(parent.firstChild)
+  }
 }
 
 function buttonData() {
@@ -634,20 +854,34 @@ function buttonExitTicket() {
 
 async function changeToDataView() {
   if (document.getElementById('class-name-code-table').children[0].children.length == 1) {
-    showClassLists();
+    createClassCodes();
   }
   currentClass.addEventListener('change', function(item) {
+    currentStudentNames = new Set();
+    exitTicketDates = new Map();
+    checkInDates = new Map();
+    updateStudentDataSelectorList();
     showRecentCheckIns();
+    showRecentExitTickets();
+    updateExitTicketChart(Array.from(currentStudentNames));
+    updateCheckInChart(Array.from(currentStudentNames));
   });
   exitTicketFormElement.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
   dataContentView.removeAttribute('hidden');
-  showRecentCheckIns();
+
+  updateStudentDataSelectorList();
+  updateExitTicketChart(Array.from(currentStudentNames));
+  updateCheckInChart(Array.from(currentStudentNames));
 }
 
 async function changeToCheckInView() {
   currentClass.removeEventListener('change', function(item) {
     showRecentCheckIns();
+    showRecentExitTickets();
+    updateExitTicketChart();
+    updateCheckInChart();
+    updateStudentDataSelectorList();
   });
   exitTicketFormElement.setAttribute('hidden', true);
   dataContentView.setAttribute('hidden', true);
@@ -657,6 +891,10 @@ async function changeToCheckInView() {
 async function changeToExitTicketView() {
   currentClass.removeEventListener('change', function(item) {
     showRecentCheckIns();
+    showRecentExitTickets();
+    updateExitTicketChart();
+    updateCheckInChart();
+    updateStudentDataSelectorList();
   });
   dataContentView.setAttribute('hidden', true);
   checkInFormElement.setAttribute('hidden', true);
@@ -672,9 +910,24 @@ function menuBar() {
     display_header.style= "padding-top: 50px";
   } else {
     menu_display.style.display = "block";
-    display_header.style= "padding-top: 300px";
+    display_header.style= "padding-top: 360px";
     console.log(menu_display.style.height);
   }
+}
+
+function studentDataSelectorListener() {
+  /**
+   * Update visible charts for just student selected
+   * Create charts for individual student
+   */
+  let selectedStudent = studentSelector.selectedOptions[0].value;
+  updateExitTicketChart([selectedStudent]);
+  updateCheckInChart([selectedStudent]);
+
+  // Collect methods from exit tickets
+
+  updateMethodsChart(selectedStudent);
+  updateRatingsChart(selectedStudent);
 }
 
 // Checks that Firebase has been imported.
@@ -719,11 +972,13 @@ var userFirstName = document.getElementById('check-in-first-name');
 
 // Modal Elements
 var modal = document.getElementById("confirmation");
-var modalClose = document.getElementsByClassName("close")[0];
+var modalClose = document.getElementsByClassName("close")[1];
 var roleModal = document.getElementById('role-modal');
 var role = ''
-var roleModalClose = document.getElementsByClassName("close")[1];
+var roleModalClose = document.getElementsByClassName("close")[2];
 var modalMessage = document.getElementById("modal-message");
+var classCodeModal = document.getElementById("class-code-modal");
+var classCodeModalClose = document.getElementsByClassName("close")[0];
 
 // Menu bar elements
 var homeButton = document.getElementById("menu-button-home");
@@ -731,11 +986,13 @@ var dataViewButton = document.getElementById("menu-button-data");
 var checkInViewButton = document.getElementById("menu-button-check-in");
 var addClassButton = document.getElementById("menu-button-add-class");
 var exitTicketViewButton = document.getElementById("menu-button-exit-ticket");
+var classCodeButton = document.getElementById("menu-button-show-class-codes");
 homeButton.addEventListener('click', menuBar);
 dataViewButton.addEventListener('click', buttonData);
 checkInViewButton.addEventListener('click', buttonCheckIn);
 addClassButton.addEventListener('click', function() {addClassModal('Please enter the code for your new class.')})
 exitTicketViewButton.addEventListener('click', buttonExitTicket);
+classCodeButton.addEventListener('click', showClassCodeModal);
 
 // Saves exit ticket on submission
 if (exitTicketFormElement) {
@@ -749,11 +1006,499 @@ if (checkInFormElement) {
 
 // Add ability for modal 'x' to close modals
 modalClose.addEventListener('click', closeMessageModal);
-roleModalClose.addEventListener('click', closeRoleModal);
+roleModalClose.addEventListener('click', function() {closeModal(roleModal);});
+classCodeModalClose.addEventListener('click', function() {closeModal(classCodeModal);});
 
 // Saves message on form submit.
 signOutButtonElement.addEventListener('click', signOut);
 signInButtonElement.addEventListener('click', signIn);
+
+// Create variables for student data to enable charts for exit tickets and check-ins
+var exitTicketDates = new Map();
+var exitTicketRatings = new Map();
+var checkInRatings = new Map();
+var checkInDates = new Map();
+var currentStudentNames = new Set();
+var currentStudentColors = new Map();
+var exitTicketMethodRatings = new Map();
+var exitTicketMethodsList = ["Google Classroom", "OneNote", "Paper Notebook", "Worksheet", "Written Notes", "Class Activity", "Calculator", "Workbook", "Whiteboard", "Class Discussion", "PantherPortal"];
+var numVals = 0;
+
+
+
+// Charts, all elements
+var exitTicketChartElement = document.getElementById("exit-ticket-chart");
+var exitTicketChart = undefined;
+var checkInChartElement = document.getElementById("check-in-chart");
+var checkInChart = undefined;
+var methodsChartElement = document.getElementById("methods-chart");
+var methodsChart = undefined;
+var ratingsChartElement = document.getElementById("ratings-chart");
+var ratingsChart = undefined;
+var studentSelector = document.getElementById("student-selector-list");
+studentSelector.addEventListener('change', studentDataSelectorListener)
+
+function getRandomColor(alpha) {
+  var color = 'rgba(';
+  for (var i = 0; i < 3; i++ ) {
+    color += String(Math.floor(Math.random() * 255)) + ",";
+  }
+  if (alpha == undefined) {
+    alpha = 1;
+  }
+  color += alpha + ")";
+  return color;
+}
+
+// Generate static colors for each student (on class load)
+function setPerStudentColors() {
+  Array.from(currentStudentNames).forEach(function(name){
+    if (currentStudentColors.get(name) == undefined) {
+      let color = getRandomColor();
+      currentStudentColors.set(name, color);
+    }
+  });
+  return true;
+}
+
+/**
+ * TODO:
+ * 
+ *  - option for time frame?
+ */
+
+
+ /**
+  * 
+  * @param {Array} names            A list of names to be displayed
+  * @param {Map} currentRatings     A Map with keys of names and values of Arrays of ratings
+  * @param {Map} currentDates       A may with keys of names and values of Arrays of dates
+  * @return {Array} ratingData      An array with data at the appropriate date intervals and null elsewhere
+  */
+function processRatingsData(desiredNames, allRatings, allDates) {
+  let ratingData = new Map();
+  if (desiredNames[0] == 'all-students') {
+    desiredNames = currentStudentNames;
+  }
+  desiredNames.forEach( function(name) {
+    ratingData.set(name, []);
+    let theseRatings = allRatings.get(name);
+    let theseDates = allDates.get(name);
+    if (theseRatings !== undefined || theseDates !== undefined) {
+      for (var i = 0; i < theseRatings.length; i++){
+        let currData = ratingData.get(name);
+        currData.push({
+          t: theseDates[i],
+          y: theseRatings[i]
+        });
+      }
+      ratingData.get(name).sort((a, b) => (a.t > b.t) ? 1 : -1);
+    }
+  });
+  return ratingData;
+}
+
+function removeCurrentData(chart){
+  if (chart !== undefined) {
+    while (chart.data.datasets.length > 0) {
+      chart.data.datasets.pop();
+    }
+    return true;
+  }
+  return false;
+}
+
+
+function updateExitTicketChart(names, dates) {
+
+  // Create dates list
+  if (dates == undefined) {
+    dates = new Set();
+    exitTicketDates.forEach( function(value, key, map){
+      value.forEach(function(val){dates.add(moment(val, "MM/DD/YYYY"))});
+    });
+  }
+
+  // Create blank chart with appropriate dates as labels
+  exitTicketChart = new Chart(exitTicketChartElement, {
+    type: 'line',
+    data: {
+      labels: Array.from(dates)
+    },
+    options: {
+      layout: {
+        padding: {
+          right: 30
+        }
+      },
+      title: {
+        display: true,
+        text: "Exit Ticket Ratings",
+        fontSize: 14
+      },
+      scales: {
+        xAxes: [{
+          type: 'time',
+          time: {
+            minUnit: 'day',
+            displayFormats: {
+              day: "MMM DD"
+            }
+          }
+        }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true,
+            max: 10
+          }
+        }]
+      },
+      elements: {
+        line: {
+          tension: 0
+        }
+      },
+      aspectRatio: 1
+    }
+  });
+  
+  // Create per-student ratings data to populate chart
+  let ratings = processRatingsData(names, exitTicketRatings, exitTicketDates);
+
+  // Fill chart with data for each student with assigned colors
+  ratings.forEach( function (value, key, map) {
+    if (names.includes(key) || names[0] == 'all-students'){
+      exitTicketChart.data.datasets.push({
+        label: key,
+        data: value,
+        borderWidth: 3,
+        borderColor: currentStudentColors.get(key),
+        fill: false
+      })
+    }
+  });
+
+  exitTicketChart.update();
+
+}
+
+function updateCheckInChart(names, dates) {
+
+  // Create names and Dates lists
+  if (dates == undefined) {
+    dates = new Set();
+    checkInDates.forEach( function(value, key, map){
+      value.forEach(function(val){dates.add(moment(val, "MM/DD/YYYY"))});
+    });
+  }
+
+
+  // Create blank chart with appropriate dates as labels
+  checkInChart = new Chart(checkInChartElement, {
+    type: 'line',
+    data: {
+      labels: Array.from(dates)
+    },
+    options: {
+      layout: {
+        padding: {
+          right: 30
+        }
+      },
+      title: {
+        display: true,
+        text: "Check-in Ratings",
+        fontSize: 14
+      },
+      scales: {
+        xAxes: [{
+          type: 'time',
+          time: {
+            minUnit: 'day',
+            displayFormats: {
+              day: "MMM DD"
+            }
+          }
+        }],
+        yAxes: [{
+          ticks: {
+            beginAtZero: true,
+            max: 10
+          }
+        }]
+      },
+      elements: {
+        line: {
+          tension: 0
+        }
+      },
+      aspectRatio: 1
+    }
+  });
+  
+  // Create per-student ratings data to populate chart
+  let ratings = processRatingsData(names, checkInRatings, checkInDates);
+
+  // Fill chart with data for each student with random colors
+  ratings.forEach( function (value, key, map) {
+    if (names.includes(key) || names[0] == 'all-students'){
+      checkInChart.data.datasets.push({
+        label: key,
+        data: value,
+        borderWidth: 3,
+        borderColor: currentStudentColors.get(key),
+        fill: false
+      })
+    }
+  });
+
+  checkInChart.update();
+  
+}
+
+function updateMethodsChart(name) {
+    // Create chart with appropriate methods as labels
+
+    let averages = new Map();
+    let frequencies = new Map();
+    let studentRatings = exitTicketMethodRatings.get(name);
+
+    removeCurrentData(methodsChart);
+
+    if (name == "all-students") {
+      methodsChart.options.title.text = "Select a student to see data";
+      averages = [0];
+      methodsChart.update();
+      return false;
+    }
+    else if (studentRatings == undefined) {
+      methodsChart.data.labels = ["No Responses"];
+      averages = [0];
+      methodsChart.update();
+      return false;
+    }
+    else{
+      // Create averages from the values
+      Array.from(studentRatings.keys()).forEach( function (method) {
+        if (studentRatings.get(method).length > 0){
+          let total = studentRatings.get(method).reduce(function(a, b){return +a + +b}, 0);
+          let average = total / studentRatings.get(method).length;
+          averages.set(method, average);
+        }
+        else{
+          averages.set(method, 0);
+        }
+      });
+
+      // Create usage frequencies from the values
+      Array.from(studentRatings.keys()).forEach( function (method) {
+        if (studentRatings.get(method).length > 0){
+          
+          let total = studentRatings.get(method).length;
+          let average = total / exitTicketRatings.get(name).length;
+          frequencies.set(method, average*10);
+        }
+        else{
+          frequencies.set(method, 0);
+        }
+      });
+    }
+
+    let freqColor = getRandomColor(0.6);
+
+    methodsChart = new Chart(methodsChartElement, {
+      type: 'bar',
+      data: {
+        labels: exitTicketMethodsList,
+        datasets: [{
+          xAxisID: 'ratings',
+          label: "Average Rating",
+          data: Array.from(averages.values()),
+          borderWidth: 1,
+          borderColor: currentStudentColors.get(name),
+          backgroundColor: currentStudentColors.get(name),
+          fill: true,
+          stack: "background",
+          barPercentage: 0.7
+        },
+        {
+          xAxisID: 'frequencies',
+          label: "% Used",
+          data: Array.from(frequencies.values()),
+          borderwidth: 0,
+          bordercolor: freqColor,
+          backgroundColor: freqColor,
+          fill: true,
+          barPercentage: 1.25
+        }]
+      },
+      options: {
+        layout: {
+          padding: {
+            right: 30
+          }
+        },
+        title: {
+          display: true,
+          text: "Class Methods Use and Ratings",
+          fontSize: 14
+        },
+        scales: {
+          xAxes: [{
+            id: 'ratings',
+            stacked: true,
+            fillOpacity: 1
+          },
+          {
+            id: 'frequencies',
+            stacked: true,
+            display: false,
+            gridLines: {
+              offsetGridlines: true
+            },
+            offset: true,
+            fillOpacity: 0.3
+          }],
+          yAxes: [{
+            stacked: false,
+            ticks: {
+              beginAtZero: true,
+              max: 10
+            }
+          }]
+        },
+        aspectRatio: 1
+      }
+    });
+
+    methodsChart.update();
+}
+
+
+/**
+ * This is a plugin to enable showingall tooltips on the pie chart below
+ */
+Chart.pluginService.register({
+  beforeRender: function (chart) {
+      if (chart.config.options.showAllTooltips) {
+          // create an array of tooltips
+          // we can't use the chart tooltip because there is only one tooltip per chart
+          chart.pluginTooltips = [];
+          chart.config.data.datasets.forEach(function (dataset, i) {
+              chart.getDatasetMeta(i).data.forEach(function (sector, j) {
+                if(dataset.data[j] !== 0){
+                  chart.pluginTooltips.push(new Chart.Tooltip({
+                      _chart: chart.chart,
+                      _chartInstance: chart,
+                      _data: chart.data,
+                      _options: chart.options.tooltips,
+                      _active: [sector]
+                  }, chart));
+                }
+              });
+          });
+
+          // turn off normal tooltips
+          chart.options.tooltips.enabled = false;
+      }
+  },
+  afterDraw: function (chart, easing) {
+      if (chart.config.options.showAllTooltips) {
+          // we don't want the permanent tooltips to animate, so don't do anything till the animation runs atleast once
+          if (!chart.allTooltipsOnce) {
+              if (easing !== 1)
+                  return;
+              chart.allTooltipsOnce = true;
+          }
+
+          // turn on tooltips
+          chart.options.tooltips.enabled = true;
+          Chart.helpers.each(chart.pluginTooltips, function (tooltip) {
+              tooltip.initialize();
+              tooltip.update();
+              // we don't actually need this since we are not animating tooltips
+              tooltip.pivot();
+              tooltip.transition(easing).draw();
+          });
+          chart.options.tooltips.enabled = false;
+      }
+  }
+})
+
+
+function updateRatingsChart(name){
+
+
+  let ratings = exitTicketRatings.get(name);
+  let ratingCounts = [];
+  let colors = ['#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ffff', '#0000ff', '#7f00ff', '#ff007f', '#00ff80', '#ff00ff'];
+
+  removeCurrentData(ratingsChart);
+
+  if (name == "all-students" || ratings == undefined) {
+    ratingsChart.options.title.text = "Select a student to see data";
+    ratingsChart.data.datasets = [{
+      backgroundColor: 'rgb(192, 192, 192, .7)',
+      data: 1
+    }]
+    ratingsChart.update();
+    return false;
+  }
+
+  for(var i = 1; i < 11; i++){
+    let num = ratings.reduce((total,x) => (x == i ? total + 1 : total), 0);
+    ratingCounts.push(num);
+  }
+
+  var options = {
+    tooltipTemplate: "<%= value %>",
+  
+    showTooltips: true,
+  
+    onAnimationComplete: function() {
+      this.showTooltip(this.datasets[0].points, true);
+    },
+    tooltipEvents: []
+  }
+
+  if (ratingsChart !== undefined) {
+    while (ratingsChart.data.datasets.length > 0) {
+      ratingsChart.data.datasets.pop();
+    }
+  }
+  // Create blank chart with appropriate dates as labels
+  ratingsChart = new Chart(ratingsChartElement, {
+    type: 'pie',
+    data: {
+      labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      datasets: [{
+        data: Array.from(ratingCounts),
+        backgroundColor: colors
+      }]
+    },
+    options: {
+      // enable this to show all tooltips
+      // Caution: tooltips will overlap
+      // showAllTooltips: true,
+      layout: {
+        padding: {
+          right: 30
+        }
+      },
+      legend: {
+        position: 'right'
+      },
+      title: {
+        display: true,
+        text: "Exit Ticket Ratings",
+        fontSize: 14
+      },
+      aspectRatio: 1
+    }
+  });
+
+  ratingsChart.update();
+}
 
 
 // initialize Firebase

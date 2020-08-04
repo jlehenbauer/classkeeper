@@ -14,8 +14,8 @@ exports.addWelcomeMessages = functions.auth.user().onCreate(async (user) => {
   //  - *await function* ask for code to link to teacher
 });
 
-// Sends a notifications to all users when a new message is posted.
-exports.sendNotifications = functions.firestore.document('check-ins/{messageId}').onCreate(
+// Sends a notification to the respective teacher(s) when a new check-in is submitted.
+exports.sendCheckInNotifications = functions.firestore.document('check-ins/{messageId}').onCreate(
   async (snapshot) => {
     // DEBUG: console.log('Feeling rating to notify ' + snapshot.data().feeling);
     // Notification details.
@@ -65,6 +65,58 @@ exports.sendNotifications = functions.firestore.document('check-ins/{messageId}'
       console.log('Notifications were sent to :' + users);
     }
   });
+
+// Sends a notification to the respective teacher(s) when a new exit ticket is submitted.
+exports.sendExitTicketNotifications = functions.firestore.document('exit-tickets/{messageId}').onCreate(
+async (snapshot) => {
+  // DEBUG: console.log('Feeling rating to notify ' + snapshot.data().feeling);
+  // Notification details.
+  const question = snapshot.data().question;
+  const know = snapshot.data().pleaseKnow;
+  const classCode  = snapshot.data().classCode;
+  const className = await admin.firestore().collection('ccodes').doc(classCode).get();
+  const payload = {
+    notification: {
+      title: `${snapshot.data().name} ranked ${snapshot.data().topic} in ${className.data().name} at a ${snapshot.data().rating}`,
+      body: (know ? ('You should know: ' + know) : '') + '\n' + (question ? ('Asked: ' + question) : ''),
+      icon: snapshot.data().profile_img || '/images/profile_placeholder.png',
+      click_action: `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com`
+    }
+  };
+  // DEBUG: console.log('Successfully created notification payload');
+
+  // Get the list of device tokens.
+  /**
+  const allUsers = await admin.firestore().collection('fcmTokens').get();
+  const tokens = [];
+  allUsers.forEach((tokenDoc) => {
+    // DEBUG: console.log(tokenDoc.data().role);
+    if (tokenDoc.data().role == 'teacher') {
+      tokens.push(tokenDoc.id);
+    }
+  });
+  **/
+  const allUsers = await admin.firestore().collection('users').get();
+  const users = [];
+  allUsers.forEach((user) => {
+    // DEBUG: console.log(tokenDoc.data().role);
+    if (user.data().role == 'teacher') {
+      if (user.data().codes.includes(classCode)) {
+        users.push(user.data().token);
+      }
+    }
+  });
+
+  if (users.length > 0) {
+    // Send notifications to all tokens.
+    const response = await admin.messaging().sendToDevice(users, payload);
+    console.log(response);
+    // Cleanup no longer needed, tokens update within user's attribute
+    //await cleanupTokens(response, users);
+    console.log('Notifications have been sent and tokens cleaned up.');
+    console.log('Notifications were sent to :' + users);
+  }
+});
 
 // Cleans up the tokens that are no longer valid.
 function cleanupTokens(response, tokens) {

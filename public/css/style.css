@@ -24,32 +24,15 @@ html, body {
       height: inherit;
       margin: auto;
       padding: 20px;
-      min-width: auto;
-      max-width: 850px;
+      min-width: 80%;
+      max-width: 90%;
       }
       form {
-      width: 100%;
+      max-width: 95%;
       padding: 20px;
       border-radius: 6px;
       background: #fff;
       box-shadow: 0 0 20px 0 #095484; 
-      }
-      .banner {
-      position: relative;
-      height: 210px;
-      background-image: url("/uploads/media/default/0001/01/c43630149befa5c9559813f72e99bcb6bf149e62.jpeg");  
-      background-size: cover;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      }
-      .banner::after {
-      content: "";
-      background-color: rgba(0, 0, 0, 0.5); 
-      position: absolute;
-      width: 100%;
-      height: 100%;
       }
       input, select, textarea {
       margin-bottom: 10px;
@@ -155,9 +138,8 @@ html, body {
                   padding: 0px;
             }
       }
-
       table#class-name-code-table{
-        display: inline-block; 
+        display: block; 
         float: left; 
         margin-right: 60px;
         border: 2px solid;
@@ -172,6 +154,49 @@ html, body {
         border-collapse: separate;
         border-spacing: 10px;
       }
+      table#recent-exit-ticket-response-table{
+        display: inline-block; 
+        border: 2px solid;
+        border-radius: 10px;
+        border-collapse: separate;
+        border-spacing: 10px;
+      }
+
+      /** Layout options for Data View grid **/
+      .gridded{
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: minmax(400px, auto);
+      }
+      .top-left{
+        grid-column: 1;
+        grid-row: 1;
+      }
+      .second-left{
+        grid-column: 1;
+        grid-row: 2;
+      }
+      .top-four{
+        grid-column: 2/5;
+        grid-row: 1/2;
+      }
+      .second-mid-two{
+        grid-column: 2/3;
+        grid-row: 3/4;
+      }
+      .second-right-two{
+        grid-column: 4/5;
+        grid-row: 3/4;
+      }
+      .third-left-two{
+        grid-column: 1/2;
+        grid-row: 5;
+      }
+      .third-right-three{
+        grid-column: 3/5;
+        grid-row: 5
+      }
+
       /** Uncomment these sections when moving back to stylized checkboxes **/
       input[type=checkbox]:checked + .check:before {
       background: #095484;
@@ -185,44 +210,44 @@ html, body {
       border: 3px solid #fff;
       }
       label.radio:after, label.check:after {
-      content: "";
-      position: absolute;
-      top: 6px;
-      width: 8px;
-      height: 4px;
-      background: transparent;
-      border-top: none;
-      border-right: none;
-      transform: rotate(-45deg);
-      opacity: 0;
+        content: "";
+        position: absolute;
+        top: 6px;
+        width: 8px;
+        height: 4px;
+        background: transparent;
+        border-top: none;
+        border-right: none;
+        transform: rotate(-45deg);
+        opacity: 0;
       }
       input[type=radio]:checked + label:after, input[type=checkbox]:checked + label:after {
-      opacity: 1;
+        opacity: 1;
       }
       .btn-block {
-      margin-top: 10px;
-      text-align: center;
+        margin-top: 10px;
+        text-align: center;
       }
       button {
-      width: 150px;
-      padding: 10px;
-      border: none;
-      border-radius: 5px; 
-      background: #095484;
-      font-size: 16px;
-      color: #fff;
-      cursor: pointer;
+        width: 150px;
+        padding: 10px;
+        border: none;
+        border-radius: 5px; 
+        background: #095484;
+        font-size: 16px;
+        color: #fff;
+        cursor: pointer;
       }
       button:hover {
-      background: #0666a3;
+        background: #0666a3; 
       }
       .profile-image{
-            width: 10em;
-            border-radius: 50%;
-            padding: 15px;
+        width: 10em;
+        border-radius: 50%;
+        padding: 15px;
       }
       #sign-in {
-            margin: 20px;
+        margin: 20px;
       }
       .sign-in-header{
         padding-top: 50px;
@@ -266,6 +291,11 @@ html, body {
         padding: 25px;
         border: 1px solid #888;
         width: 50%;
+      }
+
+      .class-code-modal-content{
+        width: 25%;
+        overflow-y: auto;
       }
 
       /* The Close Button */
@@ -323,9 +353,25 @@ html, body {
         color: #095484;
       }
 
+      .footer {
+        text-align: center;
+      }
+
+      .footer a {
+        color: #555555;
+      }
+
       /* Style the active link (or home/logo) */
       .active {
         background-color: #096084;
         color: white;
       }
-}
+      @media print
+      {
+        .no-print {
+          display: none !important;
+        }
+        .only-print{
+          display: block !important;
+        }
+      }
