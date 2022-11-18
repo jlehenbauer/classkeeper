@@ -25,13 +25,14 @@ exports.sendCheckInNotifications = functions.firestore.document('check-ins/{mess
     const className = await admin.firestore().collection('ccodes').doc(classCode).get();
     const payload = {
       notification: {
-        title: `${snapshot.data().name} checked into ${className.data().name} at a ${snapshot.data().feeling}`,
+        title: `${snapshot.data().feeling} : ${snapshot.data().name} checked in.`,
         body: (know ? ('You should know: ' + know) : '') + '\n' + (question ? ('Asked: ' + question) : ''),
         icon: snapshot.data().profile_img || '/images/profile_placeholder.png',
         click_action: `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com`
       }
     };
     // DEBUG: console.log('Successfully created notification payload');
+    // Future use - class name variable: ${className.data().name}
 
     // Get the list of device tokens.
     /**
@@ -77,8 +78,8 @@ async (snapshot) => {
   const className = await admin.firestore().collection('ccodes').doc(classCode).get();
   const payload = {
     notification: {
-      title: `${snapshot.data().name} ranked ${snapshot.data().topic} in ${className.data().name} at a ${snapshot.data().rating}`,
-      body: (know ? ('You should know: ' + know) : '') + '\n' + (question ? ('Asked: ' + question) : ''),
+      title: `${snapshot.data().name} rank: ${snapshot.data().rating}`,
+      body: 'Topic: ' + `${snapshot.data().topic}` + '\n' + (know ? ('You should know: ' + know) : '') + '\n' + (question ? ('Asked: ' + question) : ''),
       icon: snapshot.data().profile_img || '/images/profile_placeholder.png',
       click_action: `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com`
     }
